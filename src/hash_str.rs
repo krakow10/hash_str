@@ -127,9 +127,13 @@ fn macro_vs_constructor(){
 	let hash=make_hash("hey");
 	let h1=&*HashStr::anonymous("hey");
 	let h2=hstr!("hey");
-	println!("h1={}",h1.as_str());
-	println!("h2={}",h2.as_str());
+	assert_eq!(h1,h2);
+	assert_eq!(h1.as_str(),"hey");
+	assert_eq!(h2.as_str(),"hey");
+	assert_eq!(h1.as_str().len(),3);
+	assert_eq!(h2.as_str().len(),3);
+	assert_eq!(h1.as_hash_str_bytes().len(),3+SIZE_U64);
+	assert_eq!(h2.as_hash_str_bytes().len(),3+SIZE_U64);
 	assert_eq!(hash,h1.precomputed_hash(),"make_hash does not equal runtime hash");
 	assert_eq!(hash,h2.precomputed_hash(),"make_hash does not equal const hash");
-	assert_eq!(h1,h2);
 }

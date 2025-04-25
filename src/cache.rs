@@ -88,13 +88,13 @@ fn test_cache(){
 	// fn    get<'a>(&'a     self,s:&str)->Option<&'a HashStr>{
 	// fn intern<'a>(&'a mut self,s:&str)->       &'a HashStr {
 	// instead of the lifetime of the underlying data 'str
-	println!("{}",a==b);
+	assert_eq!(a,b);
 
 	// with alloc owned by StringHost this is no longer UB
 	drop(words);
-	println!("{}",a==b);
+	assert_eq!(a,b);
 
 	// dropping LifetimeHost gives the desired compile error
 	// drop(lifetime_host);
-	println!("{}",a==b);
+	assert_eq!(a,b);
 }
