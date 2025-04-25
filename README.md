@@ -1,6 +1,18 @@
-ustr_local
-==========
+hash_str
+========
 
-## String internment
+## Strings with Precomputed Hash
 
-A simple grow-only string internment library using a bump allocator.  Memory is freed when the cache is dropped.
+A simple library to precompute string hashes.
+
+Features:
+- Create HashStr with procomputed hash
+- Create HashStrMap using precomputed hash
+
+Feature Wishlist:
+- Intern strings into an explicit cache (not working)
+- Create HashStr at compile time with a macro, deduplicated
+- Intern strings into a global cache like ustr
+
+Non-Goals:
+- Dynamic string type like std String
