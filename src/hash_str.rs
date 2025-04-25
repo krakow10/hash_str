@@ -4,7 +4,7 @@
 #[derive(PartialEq,Eq)]
 pub struct HashStr{
 	hash:u64,
-	hash_str:str,
+	str:str,
 }
 
 impl HashStr{
@@ -14,7 +14,7 @@ impl HashStr{
 	}
 	#[inline]
 	pub fn as_str(&self)->&str{
-		&self.hash_str
+		&self.str
 	}
 	/// Struct bytes including hash prefix and trailing str
 	#[inline]
