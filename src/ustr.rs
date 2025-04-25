@@ -29,3 +29,11 @@ impl std::hash::Hash for Ustr {
         self.precomputed_hash().hash(state);
     }
 }
+
+impl core::ops::Deref for Ustr{
+	type Target=str;
+	#[inline]
+	fn deref(&self)->&Self::Target{
+		self.as_str()
+	}
+}
