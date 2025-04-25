@@ -46,7 +46,6 @@ pub(crate) fn anonymous(value: &str) -> Box<Ustr> {
 	};
 	let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<u64>());
 	bytes.extend_from_slice(&hash.to_ne_bytes());
-	bytes.extend_from_slice(&value.len().to_ne_bytes());
 	bytes.extend_from_slice(value.as_bytes());
 	let boxed=bytes.into_boxed_slice();
 	// SAFETY: hold my beer
