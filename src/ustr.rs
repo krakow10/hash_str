@@ -1,19 +1,13 @@
-
-#[derive(Clone,Copy,PartialEq,Eq)]
-pub(crate) struct Header{
-	hash:u64,
-}
-
 #[derive(PartialEq,Eq)]
 pub struct Ustr{
-	header:Header,
+	hash:u64,
 	ustr:str,
 }
 
 impl Ustr{
 	#[inline]
 	pub fn precomputed_hash(&self)->u64{
-		self.header.hash
+		self.hash
 	}
 	#[inline]
 	pub fn as_str(&self)->&str{
@@ -50,7 +44,7 @@ pub(crate) fn anonymous(value: &str) -> Box<Ustr> {
 		hasher.write(value.as_bytes());
 		hasher.finish()
 	};
-	let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<Header>());
+	let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<u64>());
 	bytes.extend_from_slice(&hash.to_ne_bytes());
 	bytes.extend_from_slice(&value.len().to_ne_bytes());
 	bytes.extend_from_slice(value.as_bytes());
