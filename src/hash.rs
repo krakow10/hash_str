@@ -35,37 +35,26 @@ impl Hasher for IdentityHasher {
 
 #[test]
 fn test_hashing() {
-    use crate::ustr::Ustr;
+	// an anonymous Ustr that is not owned by a StringCache
+	fn anonymous(value: &str) -> Box<Ustr> {
+		use std::hash::Hasher;
+		let hash = {
+			let mut hasher = ahash::AHasher::default();
+			hasher.write(value.as_bytes());
+			hasher.finish()
+		};
+		let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<crate::ustr::Header>());
+		bytes.extend_from_slice(&hash.to_ne_bytes());
+		bytes.extend_from_slice(&value.len().to_ne_bytes());
+		bytes.extend_from_slice(value.as_bytes());
+		let boxed=bytes.into_boxed_slice();
+		// SAFETY: hold my beer
+		unsafe{core::mem::transmute(boxed)}
+	}
 
     use std::hash::Hash;
-	let u1:Box<Ustr> = {
-		let string="the quick brown fox";
-		let hash = {
-			let mut hasher = ahash::AHasher::default();
-			hasher.write(string.as_bytes());
-			hasher.finish()
-		};
-		let mut bytes=Vec::new();
-		bytes.extend_from_slice(&hash.to_ne_bytes());
-		bytes.extend_from_slice(&string.len().to_ne_bytes());
-		bytes.extend_from_slice(string.as_bytes());
-		let boxed=bytes.into_boxed_slice();
-		unsafe{core::mem::transmute(boxed)}
-	};
-	let u2:Box<Ustr> = {
-		let string="jumped over the lazy dog";
-		let hash = {
-			let mut hasher = ahash::AHasher::default();
-			hasher.write(string.as_bytes());
-			hasher.finish()
-		};
-		let mut bytes=Vec::new();
-		bytes.extend_from_slice(&hash.to_ne_bytes());
-		bytes.extend_from_slice(&string.len().to_ne_bytes());
-		bytes.extend_from_slice(string.as_bytes());
-		let boxed=bytes.into_boxed_slice();
-		unsafe{core::mem::transmute(boxed)}
-	};
+	let u1=anonymous("the quick brown fox");
+	let u2=anonymous("jumped over the lazy dog");
 
 	let mut hasher = IdentityHasher::default();
 	u1.hash(&mut hasher);
