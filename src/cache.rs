@@ -2,16 +2,23 @@ use crate::ustr::anonymous;
 use crate::ustr::Ustr;
 use crate::hash::UstrSet;
 
+pub struct StringHost(bumpalo::Bump);
+impl StringHost{
+	pub fn new()->Self{
+		Self(bumpalo::Bump::new())
+	}
+}
+
 pub struct StringCache<'str>{
-	alloc:bumpalo::Bump,
+	host:&'str StringHost,
 	entries:UstrSet<'str>,
 }
 
 impl<'str> StringCache<'str>{
 	#[inline]
-	pub fn new()->Self{
+	pub fn new(host:&'str StringHost)->Self{
 		StringCache{
-			alloc:bumpalo::Bump::new(),
+			host,
 			entries:UstrSet::default(),
 		}
 	}
@@ -37,7 +44,7 @@ impl<'str> StringCache<'str>{
 			return ustr;
 		}
 		// alloc new ustr
-		let new_ustr_bytes=self.alloc.alloc_slice_copy(ustr.as_ustr_bytes());
+		let new_ustr_bytes=self.host.0.alloc_slice_copy(ustr.as_ustr_bytes());
 		let new_ustr=unsafe{core::mem::transmute(new_ustr_bytes)};
 		// insert into entries
 		self.entries.insert(new_ustr);
@@ -47,7 +54,8 @@ impl<'str> StringCache<'str>{
 
 #[test]
 fn test_cache(){
-	let mut words=StringCache::new();
+	let lifetime_host=StringHost::new();
+	let mut words=StringCache::new(&lifetime_host);
 
 	// borrow Words mutably
 	let a=words.intern("bruh");
@@ -62,8 +70,7 @@ fn test_cache(){
 	// instead of the lifetime of the underlying data 'str
 	println!("{}",a==b);
 
-	// with a correct implementation,
-	// dropping words here should introduce a compile error
+	// with alloc owned by StringHost this is no longer UB
 	drop(words);
 	println!("{}",a==b);
 
