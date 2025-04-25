@@ -20,6 +20,10 @@ pub struct IdentityHasher {
 }
 
 impl Hasher for IdentityHasher {
+	#[inline]
+    fn write_u64(&mut self, value: u64) {
+        self.hash = value;
+    }
     #[inline]
     fn write(&mut self, bytes: &[u8]) {
         self.hash = u64::from_ne_bytes(bytes.try_into().unwrap());

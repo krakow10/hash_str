@@ -24,7 +24,7 @@ impl Ustr{
 impl std::hash::Hash for Ustr {
 	#[inline]
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.precomputed_hash().hash(state);
+        state.write_u64(self.precomputed_hash());
     }
 }
 
