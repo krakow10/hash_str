@@ -1,7 +1,7 @@
 /// HashStr is a dynamically sized type so it is used similarly to &str.
 /// A hash is stored at the beginning followed by a str.  The length is
 /// known by the fat pointer when in the form &HashStr.
-#[derive(PartialEq,Eq)]
+#[derive(Debug,PartialEq,Eq)]
 pub struct HashStr{
 	hash:u64,
 	str:str,
@@ -59,13 +59,15 @@ pub(crate) fn make_hash(value:&str)->u64{
 }
 
 const SIZE_U64:usize=core::mem::size_of::<u64>();
+#[macro_export]
 macro_rules! hstr{
-	($hash:expr,$str:expr)=>{
+	($str:literal)=>{
 		{
 			const SIZE:usize=SIZE_U64+$str.len();
 			const BYTES:[u8;SIZE]={
 				let mut bytes=[0;SIZE];
-				let hash_bytes=$hash.to_ne_bytes();
+				let hash=ahash_macro::hash_literal!($str);
+				let hash_bytes=hash.to_ne_bytes();
 				let mut i=0;
 				while i<SIZE_U64{
 					bytes[i]=hash_bytes[i];
@@ -78,14 +80,32 @@ macro_rules! hstr{
 				}
 				bytes
 			};
-			unsafe{HashStr::ref_from_bytes(&BYTES)}
+			unsafe{HashStr::ref_from_bytes(BYTES.as_slice())}
 		}
 	};
 }
 
+
+#[test]
+fn ahash_macro(){
+	let hash_macro=ahash_macro::hash_literal!("hey");
+	let hash_runtime=make_hash("hey");
+	assert_eq!(hash_macro,hash_runtime);
+}
 #[test]
 fn dedup(){
-	let h1=hstr!(0u64,"hey");
-	let h2=hstr!(0u64,"hey");
+	let h1=hstr!("hey");
+	let h2=hstr!("hey");
 	assert!(core::ptr::addr_eq(h1,h2));
+}
+#[test]
+fn macro_vs_constructor(){
+	let hash=make_hash("hey");
+	let h1=&*HashStr::anonymous("hey");
+	let h2=hstr!("hey");
+	println!("h1={}",h1.as_str());
+	println!("h2={}",h2.as_str());
+	assert_eq!(hash,h1.precomputed_hash(),"make_hash does not equal runtime hash");
+	assert_eq!(hash,h2.precomputed_hash(),"make_hash does not equal const hash");
+	assert_eq!(h1,h2);
 }

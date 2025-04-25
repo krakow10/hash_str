@@ -16,6 +16,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ahash_macro"
+version = "0.1.0"
+dependencies = [
+ "ahash",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -61,6 +71,7 @@ name = "hash_str"
 version = "0.0.1"
 dependencies = [
  "ahash",
+ "ahash_macro",
  "bumpalo",
  "hashbrown",
 ]
