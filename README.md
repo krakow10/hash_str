@@ -7,7 +7,7 @@ A simple library for strings with a precomputed hash.
 
 Features:
 - Create HashStr with precomputed hash
-- Create HashStrMap using HashStr's precomputed hash
+- Create HashStrMap utilizing HashStr's precomputed hash
 
 Broken Features:
 - Intern strings into an explicit cache
