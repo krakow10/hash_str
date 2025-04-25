@@ -19,6 +19,8 @@ impl HashStr{
 	}
 	#[inline]
 	pub const fn as_str(&self)->&str{
+		// This code does not resize the fat pointer,
+		// so it must be hacked to the correct size ahead of time.
 		&self.0.dst
 	}
 	/// Struct bytes including hash prefix and trailing str
@@ -38,11 +40,14 @@ impl HashStr{
 	#[inline]
 	pub const unsafe fn ref_from_bytes<'a>(bytes:&'a [u8])->&'a Self{
 		// adapted from https://github.com/jonhoo/codecrafters-bittorrent-rust/blob/9dc424d4699febed87fefe8eef94509ab5392b56/src/peer.rs#L350-L359
-		let dst_bytes=unsafe{core::slice::from_raw_parts(
-			bytes as *const [u8] as *const u8, // .add(SIZE_U64) ?
-			bytes.len() - SIZE_U64
+		let dst_ptr=bytes as *const [u8] as *const u8;
+		// fat pointer hack: set size to the dst portion without the hash
+		let dst_len_hacked=bytes.len() - SIZE_U64;
+		let dst_bytes_hacked=unsafe{core::slice::from_raw_parts(
+			dst_ptr,
+			dst_len_hacked
 		)};
-		let h = dst_bytes as *const [u8] as *const Self;
+		let h = dst_bytes_hacked as *const [u8] as *const Self;
 		// SAFETY: above pointer is non-null
 		unsafe{&*h}
 	}
