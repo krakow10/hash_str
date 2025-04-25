@@ -1,20 +1,25 @@
+#[repr(C)]
+#[derive(Debug,PartialEq,Eq)]
+pub(crate) struct HashDST<T:?Sized>{
+	hash:u64,
+	dst:T,
+}
+
 /// HashStr is a dynamically sized type so it is used similarly to &str.
 /// A hash is stored at the beginning followed by a str.  The length is
 /// known by the fat pointer when in the form &HashStr.
+#[repr(transparent)]
 #[derive(Debug,PartialEq,Eq)]
-pub struct HashStr{
-	hash:u64,
-	str:str,
-}
+pub struct HashStr(HashDST<str>);
 
 impl HashStr{
 	#[inline]
 	pub const fn precomputed_hash(&self)->u64{
-		self.hash
+		self.0.hash
 	}
 	#[inline]
 	pub const fn as_str(&self)->&str{
-		&self.str
+		&self.0.dst
 	}
 	/// Struct bytes including hash prefix and trailing str
 	#[inline]
@@ -64,7 +69,7 @@ macro_rules! hstr{
 	($str:literal)=>{
 		{
 			const SIZE:usize=SIZE_U64+$str.len();
-			const BYTES:[u8;SIZE]={
+			const BYTES:HashDST<[u8;SIZE]> ={
 				let mut bytes=[0;SIZE];
 				let hash=ahash_macro::hash_literal!($str);
 				let hash_bytes=hash.to_ne_bytes();
@@ -78,9 +83,14 @@ macro_rules! hstr{
 					bytes[i]=str_bytes[i-SIZE_U64];
 					i+=1;
 				}
-				bytes
+				HashDST{
+					hash,
+					dst:bytes,
+				}
 			};
-			unsafe{HashStr::ref_from_bytes(BYTES.as_slice())}
+			let hash_bytes:&HashDST<[u8]> =&BYTES;
+			let hash_str:&HashStr=unsafe{core::mem::transmute(hash_bytes)};
+			hash_str
 		}
 	};
 }
