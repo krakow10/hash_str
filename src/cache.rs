@@ -67,15 +67,15 @@ fn test_cache(){
 	let mut words=StringCache::new(&lifetime_host);
 
 	// borrow Words mutably
-	let a=words.intern_str("bruh");
+	let a:&Ustr=words.intern_str("bruh");
 	// drop mutable borrow and borrow immutably
-	let b=words.get_str("bruh").unwrap();
+	let b:&Ustr=words.get_str("bruh").unwrap();
 	// compare both references; this is impossible when
 	// the lifetimes of a and b are derived from
 	// the borrows in .get and .intern
 	// e.g.
-	// fn    get<'a>(&'a     self,s:&str)->Option<&'a str>{
-	// fn intern<'a>(&'a mut self,s:&str)->       &'a str {
+	// fn    get<'a>(&'a     self,s:&str)->Option<&'a Ustr>{
+	// fn intern<'a>(&'a mut self,s:&str)->       &'a Ustr {
 	// instead of the lifetime of the underlying data 'str
 	println!("{}",a==b);
 
