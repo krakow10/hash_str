@@ -41,3 +41,20 @@ impl core::ops::Deref for Ustr{
 		self.as_str()
 	}
 }
+
+// an anonymous Ustr that is not owned by a StringCache
+pub(crate) fn anonymous(value: &str) -> Box<Ustr> {
+	use std::hash::Hasher;
+	let hash = {
+		let mut hasher = ahash::AHasher::default();
+		hasher.write(value.as_bytes());
+		hasher.finish()
+	};
+	let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<Header>());
+	bytes.extend_from_slice(&hash.to_ne_bytes());
+	bytes.extend_from_slice(&value.len().to_ne_bytes());
+	bytes.extend_from_slice(value.as_bytes());
+	let boxed=bytes.into_boxed_slice();
+	// SAFETY: hold my beer
+	unsafe{core::mem::transmute(boxed)}
+}

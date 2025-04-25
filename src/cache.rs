@@ -1,3 +1,4 @@
+use crate::ustr::anonymous;
 use crate::ustr::Ustr;
 use crate::hash::UstrSet;
 
@@ -7,16 +8,27 @@ pub struct StringCache<'str>{
 }
 
 impl<'str> StringCache<'str>{
+	#[inline]
 	pub fn new()->Self{
 		StringCache{
 			alloc:bumpalo::Bump::new(),
 			entries:UstrSet::default(),
 		}
 	}
+	#[inline]
+	pub fn get_str(&self,string:&str)->Option<&'str Ustr>{
+		// TODO: avoid allocation
+		let ustr=&*anonymous(string);
+		self.get(ustr)
+	}
+	#[inline]
 	pub fn get(&self,ustr:&Ustr)->Option<&'str Ustr>{
 		self.entries.get(ustr).copied()
 	}
-	pub fn intern(&mut self,ustr:&Ustr)->&'str Ustr{
+	#[inline]
+	pub fn intern(&mut self,string:&str)->&'str Ustr{
+		// TODO: avoid allocation
+		let ustr=&*anonymous(string);
 		if let Some(ustr)=self.get(ustr){
 			return ustr;
 		}

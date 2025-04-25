@@ -33,24 +33,9 @@ impl Hasher for IdentityHasher {
 
 #[test]
 fn test_hashing() {
-	// an anonymous Ustr that is not owned by a StringCache
-	fn anonymous(value: &str) -> Box<Ustr> {
-		use std::hash::Hasher;
-		let hash = {
-			let mut hasher = ahash::AHasher::default();
-			hasher.write(value.as_bytes());
-			hasher.finish()
-		};
-		let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<crate::ustr::Header>());
-		bytes.extend_from_slice(&hash.to_ne_bytes());
-		bytes.extend_from_slice(&value.len().to_ne_bytes());
-		bytes.extend_from_slice(value.as_bytes());
-		let boxed=bytes.into_boxed_slice();
-		// SAFETY: hold my beer
-		unsafe{core::mem::transmute(boxed)}
-	}
-
+	use crate::ustr::anonymous;
 	use std::hash::Hash;
+
 	let u1=&*anonymous("the quick brown fox");
 	let u2=&*anonymous("jumped over the lazy dog");
 
