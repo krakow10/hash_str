@@ -25,25 +25,39 @@ impl HashStr{
 	#[inline]
 	pub const fn as_hash_str_bytes<'a>(&'a self)->&'a [u8]{
 		// SAFETY: HashStr is always valid as bytes
-		unsafe{core::mem::transmute(self)}
+		unsafe{core::slice::from_raw_parts(
+			self as *const Self as *const u8,
+			SIZE_U64+self.as_str().len()
+		)}
 	}
 	/// Create a `&HashStr` from bytes.
 	///
-	/// SAFETY: `&bytes[8..]` must be valid UTF-8
+	/// SAFETY:
+	/// - `bytes.len()` must be at least 8
+	/// - `&bytes[8..]` must be valid UTF-8
 	#[inline]
 	pub const unsafe fn ref_from_bytes<'a>(bytes:&'a [u8])->&'a Self{
-		unsafe{core::mem::transmute(bytes)}
+		// adapted from https://github.com/jonhoo/codecrafters-bittorrent-rust/blob/9dc424d4699febed87fefe8eef94509ab5392b56/src/peer.rs#L350-L359
+		let dst_bytes=unsafe{core::slice::from_raw_parts(
+			bytes as *const [u8] as *const u8, // .add(SIZE_U64) ?
+			bytes.len() - SIZE_U64
+		)};
+		let h = dst_bytes as *const [u8] as *const Self;
+		// SAFETY: above pointer is non-null
+		unsafe{&*h}
 	}
 	/// An anonymous HashStr that is not owned by a StringCache
 	#[inline]
 	pub fn anonymous(value: &str) -> Box<HashStr> {
 		let hash=make_hash(value);
-		let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<u64>());
+		let mut bytes=Vec::with_capacity(value.len()+SIZE_U64);
 		bytes.extend_from_slice(&hash.to_ne_bytes());
 		bytes.extend_from_slice(value.as_bytes());
 		let boxed=bytes.into_boxed_slice();
-		// SAFETY: hold my beer
-		unsafe{core::mem::transmute(boxed)}
+		// SAFETY: leak the box to avoid calling its destructor
+		let href=unsafe{Self::ref_from_bytes(Box::leak(boxed))};
+		// SAFETY: we know that this is a unique reference because we just created it
+		unsafe{Box::from_raw(href as *const Self as *mut Self)}
 	}
 }
 
@@ -69,7 +83,7 @@ macro_rules! hstr{
 	($str:literal)=>{
 		{
 			const SIZE:usize=SIZE_U64+$str.len();
-			const BYTES:HashDST<[u8;SIZE]> ={
+			const BYTES:[u8;SIZE]={
 				let mut bytes=[0;SIZE];
 				let hash=ahash_macro::hash_literal!($str);
 				let hash_bytes=hash.to_ne_bytes();
@@ -83,14 +97,9 @@ macro_rules! hstr{
 					bytes[i]=str_bytes[i-SIZE_U64];
 					i+=1;
 				}
-				HashDST{
-					hash,
-					dst:bytes,
-				}
+				bytes
 			};
-			let hash_bytes:&HashDST<[u8]> =&BYTES;
-			let hash_str:&HashStr=unsafe{core::mem::transmute(hash_bytes)};
-			hash_str
+			unsafe{HashStr::ref_from_bytes(&BYTES)}
 		}
 	};
 }
