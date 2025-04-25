@@ -16,6 +16,10 @@ impl Ustr{
 	pub fn precomputed_hash(&self)->u64{
 		self.header.hash
 	}
+	#[inline]
+	pub fn as_str(&self)->&str{
+		&self.ustr
+	}
 }
 
 // Just feed the precomputed hash into the Hasher. Note that this will of course
