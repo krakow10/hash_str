@@ -22,7 +22,8 @@ impl HashStr{
 	/// Struct bytes including hash prefix and trailing str
 	#[inline]
 	pub const fn as_hash_str_bytes<'a>(&'a self)->&'a [u8]{
-		// SAFETY: HashStr is always valid as bytes
+		// SAFETY: HashStr is always valid as bytes,
+		// but the fat pointer must be widened to undo the hack
 		unsafe{core::slice::from_raw_parts(
 			self as *const Self as *const u8,
 			SIZE_U64+self.as_str().len()
