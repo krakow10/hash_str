@@ -10,15 +10,13 @@ impl HashStrHost{
 }
 
 pub struct HashStrCache<'str>{
-	host:&'str HashStrHost,
 	entries:HashTable<&'str HashStr>,
 }
 
 impl<'str> HashStrCache<'str>{
 	#[inline]
-	pub fn new(host:&'str HashStrHost)->Self{
+	pub fn new()->HashStrCache<'str>{
 		HashStrCache{
-			host,
 			entries:HashTable::new(),
 		}
 	}
@@ -36,20 +34,20 @@ impl<'str> HashStrCache<'str>{
 		self.entries.find(hash,|&s|s.as_str()==string).copied()
 	}
 	#[inline]
-	pub fn intern_str(&mut self,string:&str)->&'str HashStr{
+	pub fn intern_str(&mut self,host:&'str HashStrHost,string:&str)->&'str HashStr{
 		// TODO: avoid allocation
 		let hash_str=&*HashStr::anonymous(string);
-		self.intern_hash_str(hash_str)
+		self.intern_hash_str(host,hash_str)
 	}
 	#[inline]
-	pub fn intern_hash_str(&mut self,hash_str:&HashStr)->&'str HashStr{
+	pub fn intern_hash_str(&mut self,host:&'str HashStrHost,hash_str:&HashStr)->&'str HashStr{
 		// check exists
 		if let Some(hash_str)=self.get_hash_str(hash_str){
 			return hash_str;
 		}
 
 		// alloc new hash_str
-		let new_hash_str_bytes=self.host.0.alloc_slice_copy(hash_str.as_hash_str_bytes());
+		let new_hash_str_bytes=host.0.alloc_slice_copy(hash_str.as_hash_str_bytes());
 		// SAFETY: the bytes returned from the alloc
 		// are copied from the bytes fed into the alloc
 		let new_hash_str=unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)};
@@ -66,10 +64,10 @@ impl<'str> HashStrCache<'str>{
 #[test]
 fn test_cache(){
 	let lifetime_host=HashStrHost::new();
-	let mut words=HashStrCache::new(&lifetime_host);
+	let mut words=HashStrCache::new();
 
 	// borrow Words mutably
-	let a:&HashStr=words.intern_str("bruh");
+	let a:&HashStr=words.intern_str(&lifetime_host,"bruh");
 	// drop mutable borrow and borrow immutably
 	let b:&HashStr=words.get_str("bruh").unwrap();
 	// compare both references; this is impossible when
