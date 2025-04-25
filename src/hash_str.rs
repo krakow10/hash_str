@@ -28,20 +28,6 @@ impl std::hash::Hash for HashStr {
     }
 }
 
-impl core::ops::Deref for HashStr{
-	type Target=str;
-	#[inline]
-	fn deref(&self)->&Self::Target{
-		self.as_str()
-	}
-}
-
-impl core::fmt::Display for HashStr{
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		f.write_str(self.as_str())
-	}
-}
-
 pub(crate) fn make_hash(value:&str)->u64{
 	use std::hash::Hasher;
 	let mut hasher=ahash::AHasher::default();

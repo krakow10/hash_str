@@ -5,3 +5,5 @@ pub use hash_str::*;
 
 mod cache;
 pub use cache::*;
+
+mod ornaments;
