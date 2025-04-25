@@ -4,11 +4,11 @@ use std::{
     hash::{BuildHasherDefault, Hasher},
 };
 
-/// A standard `HashMap` using `Ustr` as the key type with a custom `Hasher`
+/// A standard `HashMap` using `&Ustr` as the key type with a custom `Hasher`
 /// that just uses the precomputed hash for speed instead of calculating it.
 pub type UstrMap<'a,V> = HashMap<&'a Ustr, V, BuildHasherDefault<IdentityHasher>>;
 
-/// A standard `HashSet` using `Ustr` as the key type with a custom `Hasher`
+/// A standard `HashSet` using `&Ustr` as the key type with a custom `Hasher`
 /// that just uses the precomputed hash for speed instead of calculating it.
 pub type UstrSet<'a> = HashSet<&'a Ustr, BuildHasherDefault<IdentityHasher>>;
 
@@ -22,9 +22,7 @@ pub struct IdentityHasher {
 impl Hasher for IdentityHasher {
     #[inline]
     fn write(&mut self, bytes: &[u8]) {
-        if bytes.len() == 8 {
-            self.hash = u64::from_ne_bytes(bytes.try_into().unwrap());
-        }
+        self.hash = u64::from_ne_bytes(bytes.try_into().unwrap());
     }
 
     #[inline]
