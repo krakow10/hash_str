@@ -1,17 +1,17 @@
 use crate::ustr::Ustr;
 use crate::hash::UstrSet;
 
-struct A{
-	alloc:LeakyBumpAlloc,
-	old_alloc:Vec<LeakyBumpAlloc>,
+struct NeverDrop<A>{
+	alloc:A,
+	old_alloc:Vec<A>,
 }
 
-struct StringCache<'str,A>{
-	alloc:A,
+pub struct StringCache<'str>{
+	alloc:NeverDrop<LeakyBumpAlloc>,
 	entries:UstrSet<'str>,
 }
 
-impl<'str,A> StringCache<'str,A>{
+impl<'str> StringCache<'str>{
 	pub fn get(&self,ustr:&Ustr)->Option<&'str Ustr>{
 		self.entries.get(ustr).map(|&ustr|ustr)
 	}
