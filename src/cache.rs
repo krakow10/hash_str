@@ -16,19 +16,23 @@ impl<'str> StringCache<'str>{
 		}
 	}
 	#[inline]
-	pub fn get_str(&self,string:&str)->Option<&'str Ustr>{
+	pub fn get(&self,string:&str)->Option<&'str Ustr>{
 		// TODO: avoid allocation
 		let ustr=&*anonymous(string);
-		self.get(ustr)
+		self.get_ustr(ustr)
 	}
 	#[inline]
-	pub fn get(&self,ustr:&Ustr)->Option<&'str Ustr>{
+	pub fn get_ustr(&self,ustr:&Ustr)->Option<&'str Ustr>{
 		self.entries.get(ustr).copied()
 	}
 	#[inline]
 	pub fn intern(&mut self,string:&str)->&'str Ustr{
 		// TODO: avoid allocation
 		let ustr=&*anonymous(string);
+		self.intern_ustr(ustr)
+	}
+	#[inline]
+	pub fn intern_ustr(&mut self,ustr:&Ustr)->&'str Ustr{
 		if let Some(ustr)=self.get(ustr){
 			return ustr;
 		}
