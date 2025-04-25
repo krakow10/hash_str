@@ -51,8 +51,8 @@ fn test_hashing() {
 	}
 
     use std::hash::Hash;
-	let u1=anonymous("the quick brown fox");
-	let u2=anonymous("jumped over the lazy dog");
+	let u1=&*anonymous("the quick brown fox");
+	let u2=&*anonymous("jumped over the lazy dog");
 
 	let mut hasher = IdentityHasher::default();
 	u1.hash(&mut hasher);
@@ -63,9 +63,9 @@ fn test_hashing() {
 	assert_eq!(hasher.finish(), u2.precomputed_hash());
 
 	let mut hm = UstrMap::<u32>::default();
-	hm.insert(&u1, 17);
-	hm.insert(&u2, 42);
+	hm.insert(u1, 17);
+	hm.insert(u2, 42);
 
-	assert_eq!(hm.get(u1.as_ref()), Some(&17));
-	assert_eq!(hm.get(u2.as_ref()), Some(&42));
+	assert_eq!(hm.get(u1), Some(&17));
+	assert_eq!(hm.get(u2), Some(&42));
 }
