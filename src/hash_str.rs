@@ -1,27 +1,23 @@
-#[repr(C)]
-#[derive(Debug,PartialEq,Eq)]
-pub(crate) struct HashDST<T:?Sized>{
-	hash:u64,
-	dst:T,
-}
-
 /// HashStr is a dynamically sized type so it is used similarly to &str.
 /// A hash is stored at the beginning followed by a str.  The length is
 /// known by the fat pointer when in the form &HashStr.
-#[repr(transparent)]
+#[repr(C)]
 #[derive(Debug,PartialEq,Eq)]
-pub struct HashStr(HashDST<str>);
+pub struct HashStr{
+	hash:u64,
+	str:str,
+}
 
 impl HashStr{
 	#[inline]
 	pub const fn precomputed_hash(&self)->u64{
-		self.0.hash
+		self.hash
 	}
 	#[inline]
 	pub const fn as_str(&self)->&str{
 		// This code does not resize the fat pointer,
 		// so it must be hacked to the correct size ahead of time.
-		&self.0.dst
+		&self.str
 	}
 	/// Struct bytes including hash prefix and trailing str
 	#[inline]
