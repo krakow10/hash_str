@@ -50,17 +50,31 @@ impl HashStr{
 	}
 	/// An anonymous HashStr that is not owned by a StringCache
 	#[inline]
-	pub fn anonymous(value: &str) -> Box<HashStr> {
-		let hash=make_hash(value);
-		let mut bytes=Vec::with_capacity(value.len()+SIZE_U64);
-		bytes.extend_from_slice(&hash.to_ne_bytes());
-		bytes.extend_from_slice(value.as_bytes());
+	pub fn anonymous(value: String) -> Box<HashStr> {
+		let hash=make_hash(&value);
+		let mut bytes=value.into_bytes();
+		bytes.reserve_exact(SIZE_U64);
+		// SAFETY: I don't know why this function doesn't exist on std Vec
+		unsafe{insert_bytes(&mut bytes,&hash.to_ne_bytes())};
 		let boxed=bytes.into_boxed_slice();
 		// SAFETY: leak the box to avoid calling its destructor
 		let href=unsafe{Self::ref_from_bytes(Box::leak(boxed))};
 		// SAFETY: we know that this is a unique reference because we just created it
 		unsafe{Box::from_raw(href as *const Self as *mut Self)}
 	}
+}
+
+// copied from std String
+unsafe fn insert_bytes(vec:&mut Vec<u8>, bytes: &[u8]) {
+    let len = vec.len();
+    let amt = bytes.len();
+    vec.reserve_exact(amt);
+
+    unsafe {
+        core::ptr::copy(vec.as_ptr(), vec.as_mut_ptr().add(amt), len);
+        core::ptr::copy_nonoverlapping(bytes.as_ptr(), vec.as_mut_ptr(), amt);
+        vec.set_len(len + amt);
+    }
 }
 
 // Just feed the precomputed hash into the Hasher. Note that this will of course
@@ -79,7 +93,7 @@ pub(crate) fn make_hash(value:&str)->u64{
 	hasher.finish()
 }
 
-const SIZE_U64:usize=core::mem::size_of::<u64>();
+pub(crate) const SIZE_U64:usize=core::mem::size_of::<u64>();
 /// Construct a &'static HashStr at compile time.  These are presumably deduplicated by the compiler.
 #[macro_export]
 macro_rules! hstr{
@@ -123,7 +137,7 @@ fn dedup(){
 #[test]
 fn macro_vs_constructor(){
 	let hash=make_hash("hey");
-	let h1=&*HashStr::anonymous("hey");
+	let h1=&*HashStr::anonymous("hey".to_owned());
 	let h2=hstr!("hey");
 	assert_eq!(h1,h2);
 	assert_eq!(h1.as_str(),"hey");

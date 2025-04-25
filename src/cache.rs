@@ -43,8 +43,10 @@ impl<'str> HashStrCache<'str>{
 	/// Calculate the hash of a &str and intern it into the HashStrHost.
 	/// Returns the newly allocated HashStr or an existing one if there was one.
 	#[inline]
-	pub fn intern_str(&mut self,host:&'str HashStrHost,string:&str)->&'str HashStr{
+	pub fn intern_str(&mut self,host:&'str HashStrHost,str:&str)->&'str HashStr{
 		// TODO: avoid allocation
+		let mut string=String::with_capacity(str.len()+crate::hash_str::SIZE_U64);
+		string.push_str(str);
 		let hash_str=&*HashStr::anonymous(string);
 		self.intern_hash_str(host,hash_str)
 	}
