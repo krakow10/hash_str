@@ -50,7 +50,7 @@ fn test_hashing() {
 		unsafe{core::mem::transmute(boxed)}
 	}
 
-    use std::hash::Hash;
+	use std::hash::Hash;
 	let u1=&*anonymous("the quick brown fox");
 	let u2=&*anonymous("jumped over the lazy dog");
 
