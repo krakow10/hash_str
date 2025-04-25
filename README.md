@@ -8,12 +8,10 @@ A simple library for strings with a precomputed hash.
 Features:
 - Create HashStr with precomputed hash
 - Create HashStrMap utilizing HashStr's precomputed hash
-
-Broken Features:
 - Intern strings into an explicit cache
+- Create HashStr at compile time with a macro, deduplicated
 
 Wishlist:
-- Create HashStr at compile time with a macro, deduplicated
 - Intern strings into a global cache like ustr
 
 Non-Goals:
