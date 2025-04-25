@@ -39,6 +39,9 @@ fn test_hashing() {
 	let u1=&*anonymous("the quick brown fox");
 	let u2=&*anonymous("jumped over the lazy dog");
 
+	println!("u1={}",u1.as_str());
+	println!("u2={}",u2.as_str());
+
 	let mut hasher = IdentityHasher::default();
 	u1.hash(&mut hasher);
 	assert_eq!(hasher.finish(), u1.precomputed_hash());

@@ -1,3 +1,4 @@
+#[repr(C)]
 #[derive(PartialEq,Eq)]
 pub struct Ustr{
 	hash:u64,
@@ -14,8 +15,12 @@ impl Ustr{
 		&self.ustr
 	}
 	#[inline]
-	pub fn as_ustr_bytes(&self)->&[u8]{
+	pub fn as_ustr_bytes<'a>(&'a self)->&'a [u8]{
 		unsafe{core::mem::transmute(self)}
+	}
+	#[inline]
+	pub fn ref_from_bytes<'a>(bytes:&'a [u8])->&'a Self{
+		unsafe{core::mem::transmute(bytes)}
 	}
 }
 
