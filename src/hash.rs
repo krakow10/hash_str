@@ -1,16 +1,16 @@
-use crate::ustr::Ustr;
+use crate::hash_str::HashStr;
 use std::{
     collections::{HashMap, HashSet},
     hash::{BuildHasherDefault, Hasher},
 };
 
-/// A standard `HashMap` using `&Ustr` as the key type with a custom `Hasher`
+/// A standard `HashMap` using `&HashStr` as the key type with a custom `Hasher`
 /// that just uses the precomputed hash for speed instead of calculating it.
-pub type UstrMap<'a,V> = HashMap<&'a Ustr, V, BuildHasherDefault<IdentityHasher>>;
+pub type HashStrMap<'a,V> = HashMap<&'a HashStr, V, BuildHasherDefault<IdentityHasher>>;
 
-/// A standard `HashSet` using `&Ustr` as the key type with a custom `Hasher`
+/// A standard `HashSet` using `&HashStr` as the key type with a custom `Hasher`
 /// that just uses the precomputed hash for speed instead of calculating it.
-pub type UstrSet<'a> = HashSet<&'a Ustr, BuildHasherDefault<IdentityHasher>>;
+pub type HashStrSet<'a> = HashSet<&'a HashStr, BuildHasherDefault<IdentityHasher>>;
 
 /// The worst hasher in the world -- the identity hasher.
 #[doc(hidden)]
@@ -37,7 +37,7 @@ impl Hasher for IdentityHasher {
 
 #[test]
 fn test_hashing() {
-	use crate::ustr::anonymous;
+	use crate::hash_str::anonymous;
 	use std::hash::Hash;
 
 	let u1=&*anonymous("the quick brown fox");
@@ -51,7 +51,7 @@ fn test_hashing() {
 	u2.hash(&mut hasher);
 	assert_eq!(hasher.finish(), u2.precomputed_hash());
 
-	let mut hm = UstrMap::<u32>::default();
+	let mut hm = HashStrMap::<u32>::default();
 	hm.insert(u1, 17);
 	hm.insert(u2, 42);
 

@@ -1,5 +1,5 @@
-use crate::ustr::{make_hash,anonymous};
-use crate::ustr::Ustr;
+use crate::hash_str::{make_hash,anonymous};
+use crate::hash_str::HashStr;
 use hashbrown::HashTable;
 
 pub struct StringHost(bumpalo::Bump);
@@ -11,7 +11,7 @@ impl StringHost{
 
 pub struct StringCache<'str>{
 	host:&'str StringHost,
-	entries:HashTable<&'str Ustr>,
+	entries:HashTable<&'str HashStr>,
 }
 
 impl<'str> StringCache<'str>{
@@ -23,40 +23,40 @@ impl<'str> StringCache<'str>{
 		}
 	}
 	#[inline]
-	pub fn get_str(&self,string:&str)->Option<&'str Ustr>{
+	pub fn get_str(&self,string:&str)->Option<&'str HashStr>{
 		let hash=make_hash(string);
 		self.get_with_hash(hash,string)
 	}
 	#[inline]
-	pub fn get_ustr(&self,ustr:&Ustr)->Option<&'str Ustr>{
-		self.get_with_hash(ustr.precomputed_hash(),ustr.as_str())
+	pub fn get_hash_str(&self,hash_str:&HashStr)->Option<&'str HashStr>{
+		self.get_with_hash(hash_str.precomputed_hash(),hash_str.as_str())
 	}
 	#[inline]
-	fn get_with_hash(&self,hash:u64,string:&str)->Option<&'str Ustr>{
+	fn get_with_hash(&self,hash:u64,string:&str)->Option<&'str HashStr>{
 		self.entries.find(hash,|&s|s.as_str()==string).copied()
 	}
 	#[inline]
-	pub fn intern_str(&mut self,string:&str)->&'str Ustr{
+	pub fn intern_str(&mut self,string:&str)->&'str HashStr{
 		// TODO: avoid allocation
-		let ustr=&*anonymous(string);
-		self.intern_ustr(ustr)
+		let hash_str=&*anonymous(string);
+		self.intern_hash_str(hash_str)
 	}
 	#[inline]
-	pub fn intern_ustr(&mut self,ustr:&Ustr)->&'str Ustr{
+	pub fn intern_hash_str(&mut self,hash_str:&HashStr)->&'str HashStr{
 		// check exists
-		if let Some(ustr)=self.get_ustr(ustr){
-			return ustr;
+		if let Some(hash_str)=self.get_hash_str(hash_str){
+			return hash_str;
 		}
 
-		// alloc new ustr
-		let new_ustr_bytes=self.host.0.alloc_slice_copy(ustr.as_ustr_bytes());
-		let new_ustr=unsafe{core::mem::transmute(new_ustr_bytes)};
+		// alloc new hash_str
+		let new_hash_str_bytes=self.host.0.alloc_slice_copy(hash_str.as_hash_str_bytes());
+		let new_hash_str=unsafe{core::mem::transmute(new_hash_str_bytes)};
 
 		// insert into entries
 		self.entries.insert_unique(
-			ustr.precomputed_hash(),
-			new_ustr,
-			|ustr|ustr.precomputed_hash()
+			hash_str.precomputed_hash(),
+			new_hash_str,
+			|hash_str|hash_str.precomputed_hash()
 		).get()
 	}
 }
@@ -67,15 +67,15 @@ fn test_cache(){
 	let mut words=StringCache::new(&lifetime_host);
 
 	// borrow Words mutably
-	let a:&Ustr=words.intern_str("bruh");
+	let a:&HashStr=words.intern_str("bruh");
 	// drop mutable borrow and borrow immutably
-	let b:&Ustr=words.get_str("bruh").unwrap();
+	let b:&HashStr=words.get_str("bruh").unwrap();
 	// compare both references; this is impossible when
 	// the lifetimes of a and b are derived from
 	// the borrows in .get and .intern
 	// e.g.
-	// fn    get<'a>(&'a     self,s:&str)->Option<&'a Ustr>{
-	// fn intern<'a>(&'a mut self,s:&str)->       &'a Ustr {
+	// fn    get<'a>(&'a     self,s:&str)->Option<&'a HashStr>{
+	// fn intern<'a>(&'a mut self,s:&str)->       &'a HashStr {
 	// instead of the lifetime of the underlying data 'str
 	println!("{}",a==b);
 

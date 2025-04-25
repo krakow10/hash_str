@@ -1,7 +1,7 @@
 mod hash;
 pub use hash::*;
-mod ustr;
-pub use ustr::*;
+mod hash_str;
+pub use hash_str::*;
 
 mod cache;
 pub use cache::*;
