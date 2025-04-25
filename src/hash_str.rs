@@ -80,6 +80,7 @@ pub(crate) fn make_hash(value:&str)->u64{
 }
 
 const SIZE_U64:usize=core::mem::size_of::<u64>();
+/// Construct a &'static HashStr at compile time.  These are presumably deduplicated by the compiler.
 #[macro_export]
 macro_rules! hstr{
 	($str:literal)=>{
