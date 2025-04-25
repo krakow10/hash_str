@@ -2,6 +2,8 @@ use crate::hash_str::make_hash;
 use crate::hash_str::HashStr;
 use hashbrown::HashTable;
 
+/// "Host" backing storage for cached HashStrs.
+/// Pass this to HashStrCache.intern_str to create new HashStrs.
 pub struct HashStrHost(bumpalo::Bump);
 impl HashStrHost{
 	pub fn new()->Self{
@@ -9,6 +11,9 @@ impl HashStrHost{
 	}
 }
 
+/// Cache of existing entries in a HashStrHost.
+/// Useful to deduplicate a finite set of unique strings,
+/// minimizing the allocation of new strings.
 pub struct HashStrCache<'str>{
 	entries:HashTable<&'str HashStr>,
 }
@@ -20,11 +25,13 @@ impl<'str> HashStrCache<'str>{
 			entries:HashTable::new(),
 		}
 	}
+	/// Calculate the hash of a &str and fetch an existing HashStr.
 	#[inline]
 	pub fn get_str(&self,string:&str)->Option<&'str HashStr>{
 		let hash=make_hash(string);
 		self.get_with_hash(hash,string)
 	}
+	/// Fetch an existing HashStr using the precalculated hash.
 	#[inline]
 	pub fn get_hash_str(&self,hash_str:&HashStr)->Option<&'str HashStr>{
 		self.get_with_hash(hash_str.precomputed_hash(),hash_str.as_str())
@@ -33,12 +40,16 @@ impl<'str> HashStrCache<'str>{
 	fn get_with_hash(&self,hash:u64,string:&str)->Option<&'str HashStr>{
 		self.entries.find(hash,|&s|s.as_str()==string).copied()
 	}
+	/// Calculate the hash of a &str and intern it into the HashStrHost.
+	/// Returns the newly allocated HashStr or an existing one if there was one.
 	#[inline]
 	pub fn intern_str(&mut self,host:&'str HashStrHost,string:&str)->&'str HashStr{
 		// TODO: avoid allocation
 		let hash_str=&*HashStr::anonymous(string);
 		self.intern_hash_str(host,hash_str)
 	}
+	/// Intern the provided HashStr into the HashStrHost using the precalculated hash.
+	/// Returns the newly allocated HashStr or an existing one if there was one.
 	#[inline]
 	pub fn intern_hash_str(&mut self,host:&'str HashStrHost,hash_str:&HashStr)->&'str HashStr{
 		// check exists

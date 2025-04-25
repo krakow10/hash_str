@@ -1,3 +1,6 @@
+/// HashStr is a dynamically sized type so it is used similarly to &str.
+/// A hash is stored at the beginning followed by a str.  The length is
+/// known by the fat pointer when in the form &HashStr.
 #[derive(PartialEq,Eq)]
 pub struct HashStr{
 	hash:u64,
