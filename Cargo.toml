@@ -9,6 +9,5 @@ bumpalo = { version = "3.17.0", optional = true }
 hashbrown = { version = "0.15.2", optional = true }
 
 [features]
-default = ["cache"]
+default = []
 cache = ["dep:bumpalo","dep:hashbrown"]
-# global = ["cache"]
