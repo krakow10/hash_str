@@ -2,7 +2,6 @@
 #[derive(Clone,Copy,PartialEq,Eq)]
 pub(crate) struct Header{
 	hash:u64,
-	len:usize,
 }
 
 #[derive(PartialEq,Eq)]
