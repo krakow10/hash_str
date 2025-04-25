@@ -50,7 +50,7 @@ impl<'str> StringCache<'str>{
 
 		// alloc new hash_str
 		let new_hash_str_bytes=self.host.0.alloc_slice_copy(hash_str.as_hash_str_bytes());
-		let new_hash_str=unsafe{core::mem::transmute(new_hash_str_bytes)};
+		let new_hash_str=unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)};
 
 		// insert into entries
 		self.entries.insert_unique(

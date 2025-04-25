@@ -13,9 +13,16 @@ impl HashStr{
 	pub fn as_str(&self)->&str{
 		&self.hash_str
 	}
+	/// Struct bytes including hash prefix and trailing str
 	#[inline]
-	pub fn as_hash_str_bytes(&self)->&[u8]{
+	pub fn as_hash_str_bytes<'a>(&'a self)->&'a [u8]{
 		unsafe{core::mem::transmute(self)}
+	}
+	/// Create a &HashStr from bytes
+	/// SAFETY: &bytes[8..] must be valid UTF-8
+	#[inline]
+	pub unsafe fn ref_from_bytes<'a>(bytes:&'a [u8])->&'a Self{
+		unsafe{core::mem::transmute(bytes)}
 	}
 	/// an anonymous HashStr that is not owned by a StringCache
 	#[inline]
