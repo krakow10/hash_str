@@ -37,11 +37,10 @@ impl Hasher for IdentityHasher {
 
 #[test]
 fn test_hashing() {
-	use crate::hash_str::anonymous;
 	use std::hash::Hash;
 
-	let u1=&*anonymous("the quick brown fox");
-	let u2=&*anonymous("jumped over the lazy dog");
+	let u1=&*HashStr::anonymous("the quick brown fox");
+	let u2=&*HashStr::anonymous("jumped over the lazy dog");
 
 	let mut hasher = IdentityHasher::default();
 	u1.hash(&mut hasher);

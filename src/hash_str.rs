@@ -17,6 +17,17 @@ impl HashStr{
 	pub fn as_hash_str_bytes(&self)->&[u8]{
 		unsafe{core::mem::transmute(self)}
 	}
+	/// an anonymous HashStr that is not owned by a StringCache
+	#[inline]
+	pub fn anonymous(value: &str) -> Box<HashStr> {
+		let hash=make_hash(value);
+		let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<u64>());
+		bytes.extend_from_slice(&hash.to_ne_bytes());
+		bytes.extend_from_slice(value.as_bytes());
+		let boxed=bytes.into_boxed_slice();
+		// SAFETY: hold my beer
+		unsafe{core::mem::transmute(boxed)}
+	}
 }
 
 // Just feed the precomputed hash into the Hasher. Note that this will of course
@@ -33,15 +44,4 @@ pub(crate) fn make_hash(value:&str)->u64{
 	let mut hasher=ahash::AHasher::default();
 	hasher.write(value.as_bytes());
 	hasher.finish()
-}
-
-// an anonymous HashStr that is not owned by a StringCache
-pub(crate) fn anonymous(value: &str) -> Box<HashStr> {
-	let hash=make_hash(value);
-	let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<u64>());
-	bytes.extend_from_slice(&hash.to_ne_bytes());
-	bytes.extend_from_slice(value.as_bytes());
-	let boxed=bytes.into_boxed_slice();
-	// SAFETY: hold my beer
-	unsafe{core::mem::transmute(boxed)}
 }

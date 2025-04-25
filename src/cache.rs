@@ -1,4 +1,4 @@
-use crate::hash_str::{make_hash,anonymous};
+use crate::hash_str::make_hash;
 use crate::hash_str::HashStr;
 use hashbrown::HashTable;
 
@@ -38,7 +38,7 @@ impl<'str> StringCache<'str>{
 	#[inline]
 	pub fn intern_str(&mut self,string:&str)->&'str HashStr{
 		// TODO: avoid allocation
-		let hash_str=&*anonymous(string);
+		let hash_str=&*HashStr::anonymous(string);
 		self.intern_hash_str(hash_str)
 	}
 	#[inline]
