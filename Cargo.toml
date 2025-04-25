@@ -2,6 +2,11 @@
 name = "hash_str"
 version = "0.0.1"
 edition = "2021"
+repository = "https://github.com/krakow10/hash_str"
+license = "MIT OR Apache-2.0"
+description = "Strings with a precomputed hash."
+authors = ["Rhys Lloyd <krakow20@gmail.com>"]
+keywords = ["hash", "str", "internment", "string", "cache"]
 
 [dependencies]
 ahash = "0.8.11"
