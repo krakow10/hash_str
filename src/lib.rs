@@ -10,5 +10,10 @@ mod cache;
 #[cfg(feature="cache")]
 pub use cache::*;
 
+#[cfg(feature="global")]
+mod global;
+#[cfg(feature="global")]
+pub use global::*;
+
 mod ornaments;
 pub use ornaments::*;
