@@ -2,22 +2,22 @@ use crate::hash_str::make_hash;
 use crate::hash_str::HashStr;
 use hashbrown::HashTable;
 
-pub struct StringHost(bumpalo::Bump);
-impl StringHost{
+pub struct HashStrHost(bumpalo::Bump);
+impl HashStrHost{
 	pub fn new()->Self{
 		Self(bumpalo::Bump::new())
 	}
 }
 
-pub struct StringCache<'str>{
-	host:&'str StringHost,
+pub struct HashStrCache<'str>{
+	host:&'str HashStrHost,
 	entries:HashTable<&'str HashStr>,
 }
 
-impl<'str> StringCache<'str>{
+impl<'str> HashStrCache<'str>{
 	#[inline]
-	pub fn new(host:&'str StringHost)->Self{
-		StringCache{
+	pub fn new(host:&'str HashStrHost)->Self{
+		HashStrCache{
 			host,
 			entries:HashTable::new(),
 		}
@@ -65,8 +65,8 @@ impl<'str> StringCache<'str>{
 
 #[test]
 fn test_cache(){
-	let lifetime_host=StringHost::new();
-	let mut words=StringCache::new(&lifetime_host);
+	let lifetime_host=HashStrHost::new();
+	let mut words=HashStrCache::new(&lifetime_host);
 
 	// borrow Words mutably
 	let a:&HashStr=words.intern_str("bruh");
