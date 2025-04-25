@@ -3,14 +3,16 @@ hash_str
 
 ## Strings with Precomputed Hash
 
-A simple library to precompute string hashes.
+A simple library for strings with a precomputed hash.
 
 Features:
-- Create HashStr with procomputed hash
-- Create HashStrMap using precomputed hash
+- Create HashStr with precomputed hash
+- Create HashStrMap using HashStr's precomputed hash
 
-Feature Wishlist:
-- Intern strings into an explicit cache (not working)
+Broken Features:
+- Intern strings into an explicit cache
+
+Wishlist:
 - Create HashStr at compile time with a macro, deduplicated
 - Intern strings into a global cache like ustr
 
