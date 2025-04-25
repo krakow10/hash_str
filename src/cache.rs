@@ -50,6 +50,8 @@ impl<'str> StringCache<'str>{
 
 		// alloc new hash_str
 		let new_hash_str_bytes=self.host.0.alloc_slice_copy(hash_str.as_hash_str_bytes());
+		// SAFETY: the bytes returned from the alloc
+		// are copied from the bytes fed into the alloc
 		let new_hash_str=unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)};
 
 		// insert into entries
