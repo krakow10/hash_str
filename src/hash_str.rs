@@ -57,3 +57,35 @@ pub(crate) fn make_hash(value:&str)->u64{
 	hasher.write(value.as_bytes());
 	hasher.finish()
 }
+
+const SIZE_U64:usize=core::mem::size_of::<u64>();
+macro_rules! hstr{
+	($hash:expr,$str:expr)=>{
+		{
+			const SIZE:usize=SIZE_U64+$str.len();
+			const BYTES:[u8;SIZE]={
+				let mut bytes=[0;SIZE];
+				let hash_bytes=$hash.to_ne_bytes();
+				let mut i=0;
+				while i<SIZE_U64{
+					bytes[i]=hash_bytes[i];
+					i+=1;
+				}
+				let str_bytes=$str.as_bytes();
+				while i<SIZE{
+					bytes[i]=str_bytes[i-SIZE_U64];
+					i+=1;
+				}
+				bytes
+			};
+			unsafe{HashStr::ref_from_bytes(&BYTES)}
+		}
+	};
+}
+
+#[test]
+fn dedup(){
+	let h1=hstr!(0u64,"hey");
+	let h2=hstr!(0u64,"hey");
+	assert!(core::ptr::addr_eq(h1,h2));
+}
