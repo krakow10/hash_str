@@ -42,14 +42,16 @@ impl core::fmt::Display for Ustr{
 	}
 }
 
+pub(crate) fn make_hash(value:&str)->u64{
+	use std::hash::Hasher;
+	let mut hasher=ahash::AHasher::default();
+	hasher.write(value.as_bytes());
+	hasher.finish()
+}
+
 // an anonymous Ustr that is not owned by a StringCache
 pub(crate) fn anonymous(value: &str) -> Box<Ustr> {
-	use std::hash::Hasher;
-	let hash = {
-		let mut hasher = ahash::AHasher::default();
-		hasher.write(value.as_bytes());
-		hasher.finish()
-	};
+	let hash=make_hash(value);
 	let mut bytes=Vec::with_capacity(value.len()+core::mem::size_of::<u64>());
 	bytes.extend_from_slice(&hash.to_ne_bytes());
 	bytes.extend_from_slice(value.as_bytes());

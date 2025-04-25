@@ -1,6 +1,6 @@
-use crate::ustr::anonymous;
+use crate::ustr::{make_hash,anonymous};
 use crate::ustr::Ustr;
-use crate::hash::UstrSet;
+use hashbrown::HashTable;
 
 pub struct StringHost(bumpalo::Bump);
 impl StringHost{
@@ -11,7 +11,7 @@ impl StringHost{
 
 pub struct StringCache<'str>{
 	host:&'str StringHost,
-	entries:UstrSet<'str>,
+	entries:HashTable<&'str Ustr>,
 }
 
 impl<'str> StringCache<'str>{
@@ -19,36 +19,45 @@ impl<'str> StringCache<'str>{
 	pub fn new(host:&'str StringHost)->Self{
 		StringCache{
 			host,
-			entries:UstrSet::default(),
+			entries:HashTable::new(),
 		}
 	}
 	#[inline]
-	pub fn get(&self,string:&str)->Option<&'str Ustr>{
-		// TODO: avoid allocation
-		let ustr=&*anonymous(string);
-		self.get_ustr(ustr)
+	pub fn get_str(&self,string:&str)->Option<&'str Ustr>{
+		let hash=make_hash(string);
+		self.get_with_hash(hash,string)
 	}
 	#[inline]
 	pub fn get_ustr(&self,ustr:&Ustr)->Option<&'str Ustr>{
-		self.entries.get(ustr).copied()
+		self.get_with_hash(ustr.precomputed_hash(),ustr.as_str())
 	}
 	#[inline]
-	pub fn intern(&mut self,string:&str)->&'str Ustr{
+	fn get_with_hash(&self,hash:u64,string:&str)->Option<&'str Ustr>{
+		self.entries.find(hash,|&s|s.as_str()==string).copied()
+	}
+	#[inline]
+	pub fn intern_str(&mut self,string:&str)->&'str Ustr{
 		// TODO: avoid allocation
 		let ustr=&*anonymous(string);
 		self.intern_ustr(ustr)
 	}
 	#[inline]
 	pub fn intern_ustr(&mut self,ustr:&Ustr)->&'str Ustr{
-		if let Some(ustr)=self.get(ustr){
+		// check exists
+		if let Some(ustr)=self.get_ustr(ustr){
 			return ustr;
 		}
+
 		// alloc new ustr
 		let new_ustr_bytes=self.host.0.alloc_slice_copy(ustr.as_ustr_bytes());
 		let new_ustr=unsafe{core::mem::transmute(new_ustr_bytes)};
+
 		// insert into entries
-		self.entries.insert(new_ustr);
-		new_ustr
+		self.entries.insert_unique(
+			ustr.precomputed_hash(),
+			new_ustr,
+			|ustr|ustr.precomputed_hash()
+		).get()
 	}
 }
 
@@ -58,9 +67,9 @@ fn test_cache(){
 	let mut words=StringCache::new(&lifetime_host);
 
 	// borrow Words mutably
-	let a=words.intern("bruh");
+	let a=words.intern_str("bruh");
 	// drop mutable borrow and borrow immutably
-	let b=words.get("bruh").unwrap();
+	let b=words.get_str("bruh").unwrap();
 	// compare both references; this is impossible when
 	// the lifetimes of a and b are derived from
 	// the borrows in .get and .intern
