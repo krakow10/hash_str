@@ -36,6 +36,12 @@ impl core::ops::Deref for Ustr{
 	}
 }
 
+impl core::fmt::Display for Ustr{
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.write_str(self.as_str())
+	}
+}
+
 // an anonymous Ustr that is not owned by a StringCache
 pub(crate) fn anonymous(value: &str) -> Box<Ustr> {
 	use std::hash::Hasher;
