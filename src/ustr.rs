@@ -19,6 +19,10 @@ impl Ustr{
 	pub fn as_str(&self)->&str{
 		&self.ustr
 	}
+	#[inline]
+	pub fn as_ustr_bytes(&self)->&[u8]{
+		unsafe{core::mem::transmute(self)}
+	}
 }
 
 // Just feed the precomputed hash into the Hasher. Note that this will of course
