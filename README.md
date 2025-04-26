@@ -52,9 +52,9 @@ let hstr_interned2:&HashStr=cache.intern(hstr_runtime);
 let hstr_interned3:&HashStr=cache.intern(hstr_interned);
 
 // all pointers point to the first hstr that was interned
-assert!(std::ptr::addr_eq(hstr_interned,hstr_interned1));
-assert!(std::ptr::addr_eq(hstr_interned,hstr_interned2));
-assert!(std::ptr::addr_eq(hstr_interned,hstr_interned3));
+assert!(core::ptr::addr_eq(hstr_interned,hstr_interned1));
+assert!(core::ptr::addr_eq(hstr_interned,hstr_interned2));
+assert!(core::ptr::addr_eq(hstr_interned,hstr_interned3));
 
 let mut map=HashStrMap::default();
 map.insert(hstr_static,1);

@@ -8,7 +8,7 @@ const BIN_SHIFT: usize = 6;
 const NUM_BINS: usize = 1 << BIN_SHIFT;
 // Shift for top bits to determine bin a hash falls into
 const TOP_SHIFT: usize =
-    8 * std::mem::size_of::<usize>() - BIN_SHIFT;
+    8 * core::mem::size_of::<usize>() - BIN_SHIFT;
 
 /// The type used for the global string cache.
 ///

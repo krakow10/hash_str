@@ -22,7 +22,7 @@ impl core::ops::Deref for HashStr{
 
 impl core::fmt::Display for HashStr{
 	#[inline]
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	fn fmt(&self,f:&mut core::fmt::Formatter<'_>)->core::fmt::Result{
 		f.write_str(self.as_str())
 	}
 }
@@ -47,7 +47,7 @@ impl UnhashedStr{
 		unsafe{&*ptr}
 	}
 }
-impl std::hash::Hash for UnhashedStr{
+impl core::hash::Hash for UnhashedStr{
 	#[inline]
 	fn hash<H:std::hash::Hasher>(&self,state:&mut H){
 		let hash=make_hash(self.into());
@@ -67,7 +67,7 @@ impl<'a> From<&'a UnhashedStr> for &'a str{
 	}
 }
 
-impl<'a> std::borrow::Borrow<UnhashedStr> for &HashStr{
+impl<'a> core::borrow::Borrow<UnhashedStr> for &HashStr{
 	#[inline]
 	fn borrow(&self)->&UnhashedStr{
 		self.as_str().into()

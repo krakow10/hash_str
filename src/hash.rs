@@ -1,6 +1,6 @@
 use crate::hash_str::HashStr;
 use std::collections::{HashMap,HashSet};
-use std::hash::{BuildHasherDefault,Hash,Hasher};
+use core::hash::{BuildHasherDefault,Hash,Hasher};
 
 pub(crate) fn make_hash(value:&str)->u64{
 	let mut hasher=ahash::AHasher::default();
@@ -10,20 +10,20 @@ pub(crate) fn make_hash(value:&str)->u64{
 
 // Just feed the precomputed hash into the Hasher. Note that this will of course
 // be terrible unless the Hasher in question is expecting a precomputed hash.
-impl Hash for HashStr {
+impl Hash for HashStr{
 	#[inline]
-    fn hash<H: Hasher>(&self, state: &mut H) {
+    fn hash<H:Hasher>(&self,state:&mut H){
         state.write_u64(self.precomputed_hash());
     }
 }
 
 /// A standard `HashMap` using `&HashStr` as the key type with a custom `Hasher`
 /// that just uses the precomputed hash for speed instead of calculating it.
-pub type HashStrMap<'a,V> = HashMap<&'a HashStr, V, BuildHasherDefault<IdentityHasher>>;
+pub type HashStrMap<'a,V>=HashMap<&'a HashStr,V,BuildHasherDefault<IdentityHasher>>;
 
 /// A standard `HashSet` using `&HashStr` as the key type with a custom `Hasher`
 /// that just uses the precomputed hash for speed instead of calculating it.
-pub type HashStrSet<'a> = HashSet<&'a HashStr, BuildHasherDefault<IdentityHasher>>;
+pub type HashStrSet<'a>=HashSet<&'a HashStr,BuildHasherDefault<IdentityHasher>>;
 
 /// The worst hasher in the world -- the identity hasher.
 #[doc(hidden)]
@@ -41,7 +41,6 @@ impl Hasher for IdentityHasher {
     fn write(&mut self, bytes: &[u8]) {
         self.hash = u64::from_ne_bytes(bytes.try_into().unwrap());
     }
-
     #[inline]
     fn finish(&self) -> u64 {
         self.hash
@@ -51,7 +50,7 @@ impl Hasher for IdentityHasher {
 #[test]
 fn test_hashing() {
 	let u1=&*HashStr::anonymous("the quick brown fox".to_owned());
-	let u2=&*HashStr::anonymous("jumped over the lazy dog".to_owned());
+	let u2=&*HashStr::anonymous("jumps over the lazy dog".to_owned());
 
 	let mut hasher = IdentityHasher::default();
 	u1.hash(&mut hasher);
