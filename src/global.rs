@@ -59,7 +59,7 @@ impl<'str> Bins<'str>{
 	#[inline]
 	pub fn get(&self,index:impl GetHash+AsRef<str>+Copy)->Option<&'str HashStr>{
 		let hash=index.get_hash();
-	    self.0[whichbin(hash)].lock().cache.get_with_hash(hash,index.as_ref())
+	    self.0[whichbin(hash)].lock().cache.get_str_with_hash(hash,index.as_ref())
 	}
 	/// Intern a HashStr into the global cache.  The lifetime must be 'static.
 	#[inline]
@@ -72,12 +72,12 @@ impl<'str> Bins<'str>{
 	pub fn intern_str(&self,str:&str)->&'str HashStr{
 		let hash=str.get_hash();
 		let HostCache{cache,host}=&mut*self.0[whichbin(hash)].lock();
-		cache.intern_with_hash(||{
+		cache.intern_str_with_hash(||{
 			// SAFETY: this pointer is created to be valid for the
 			// duration of the .alloc borrow of host, but we know
 			// that it is actually valid for the lifetime of
 			// HostCache.host, which in this case is 'static
-			let ptr=host.alloc_with_hash(hash,str) as *const HashStr;
+			let ptr=host.alloc_str_with_hash(hash,str) as *const HashStr;
 			unsafe{&*ptr}
 		},hash,str)
 	}

@@ -40,7 +40,7 @@ fn main(){
 
 	// Intern string into deduplication cache
 	// Does not allocate unless "bruh" is a new string
-	let hstr_interned:&HashStr=cache.intern_with(&lifetime_host,"bruh");
+	let hstr_interned:&HashStr=cache.intern_str_with(&lifetime_host,"bruh");
 
 	// Intern HashStr into deduplication cache
 	// Provided HashStr must outlive the cache, enforced at compile time

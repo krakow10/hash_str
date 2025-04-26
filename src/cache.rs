@@ -22,10 +22,10 @@ impl HashStrHost{
 	/// Allocate a new HashStr, regardless of duplicates.
 	#[inline]
 	pub fn alloc(&self,str:&str)->&HashStr{
-		self.alloc_with_hash(str.get_hash(),str)
+		self.alloc_str_with_hash(str.get_hash(),str)
 	}
 	#[inline]
-	pub(crate) fn alloc_with_hash(&self,hash:u64,str:&str)->&HashStr{
+	pub(crate) fn alloc_str_with_hash(&self,hash:u64,str:&str)->&HashStr{
 		let hash_str_len=SIZE_HASH+str.len();
 		let layout=bumpalo::core_alloc::alloc::Layout::from_size_align(hash_str_len,SIZE_HASH).unwrap();
 		// alloc empty bytes for new HashStr
@@ -70,10 +70,10 @@ impl<'str> HashStrCache<'str>{
 	/// Fetch an existing HashStr, utilizing the precalculated hash if possible.
 	#[inline]
 	pub fn get(&self,index:impl GetHash+AsRef<str>+Copy)->Option<&'str HashStr>{
-		self.get_with_hash(index.get_hash(),index.as_ref())
+		self.get_str_with_hash(index.get_hash(),index.as_ref())
 	}
 	#[inline]
-	pub(crate) fn get_with_hash(&self,hash:u64,str:&str)->Option<&'str HashStr>{
+	pub(crate) fn get_str_with_hash(&self,hash:u64,str:&str)->Option<&'str HashStr>{
 		self.entries.find(hash,|&s|s.as_str()==str).copied()
 	}
 	/// Intern the provided HashStr, utilizing the precalculated hash.
@@ -89,12 +89,12 @@ impl<'str> HashStrCache<'str>{
 	/// Intern the provided string.  This will return an existing HashStr if one exists,
 	/// or allocate a new one on the provided HashStrHost.
 	#[inline]
-	pub fn intern_with(&mut self,host:&'str HashStrHost,str:&str)->&'str HashStr{
+	pub fn intern_str_with(&mut self,host:&'str HashStrHost,str:&str)->&'str HashStr{
 		let hash=str.get_hash();
-		self.intern_with_hash(||host.alloc_with_hash(hash,str),hash,str)
+		self.intern_str_with_hash(||host.alloc_str_with_hash(hash,str),hash,str)
 	}
 	#[inline]
-	pub(crate) fn intern_with_hash(&mut self,with:impl FnOnce()->&'str HashStr,hash:u64,str:&str)->&'str HashStr{
+	pub(crate) fn intern_str_with_hash(&mut self,with:impl FnOnce()->&'str HashStr,hash:u64,str:&str)->&'str HashStr{
 		self.entries.entry(
 			hash,
 			|&s|s.as_str()==str,
@@ -109,7 +109,7 @@ fn test_cache(){
 	let mut words=HashStrCache::new();
 
 	// borrow Words mutably
-	let a:&HashStr=words.intern_with(&lifetime_host,"bruh");
+	let a:&HashStr=words.intern_str_with(&lifetime_host,"bruh");
 	// drop mutable borrow and borrow immutably
 	let b:&HashStr=words.get("bruh").unwrap();
 	// compare both references; this is impossible when
