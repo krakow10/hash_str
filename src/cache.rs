@@ -1,4 +1,4 @@
-use crate::ornaments::GetHash;
+use crate::ornaments::{GetHash,HashedStr};
 use crate::hash_str::{HashStr,SIZE_HASH};
 use hashbrown::HashTable;
 
@@ -22,8 +22,8 @@ impl HashStrHost{
 	}
 	/// Allocate a new HashStr, regardless of duplicates.
 	#[inline]
-	pub fn alloc(&self,str:&str)->&HashStr{
-		self.alloc_str_with_hash(str.get_hash(),str)
+	pub fn alloc<'a>(&self,index:impl GetHash+Into<&'a str>)->&HashStr{
+		self.alloc_str_with_hash(index.get_hash(),index.into())
 	}
 	#[inline]
 	pub(crate) fn alloc_str_with_hash(&self,hash:u64,str:&str)->&HashStr{
@@ -75,12 +75,34 @@ impl<'str> HashStrCache<'str>{
 	}
 	/// Fetch an existing HashStr, utilizing the precalculated hash if possible.
 	#[inline]
-	pub fn get(&self,index:impl GetHash+AsRef<str>)->Option<&'str HashStr>{
-		self.get_str_with_hash(index.get_hash(),index.as_ref())
+	pub fn get<'a>(&self,index:impl GetHash+Into<&'a str>)->Option<&'str HashStr>{
+		self.presence(index).get()
+	}
+	/// Finds an existing HashStr if it is present.  Can be chained to
+	/// spill missing items into another cache, reusing the hash.
+	/// The lifetimes of the chained caches must be in shrinking order
+	/// so that the returned type has the lifetime of the shortest cache.
+	///
+	/// ```rust
+	/// use hash_str::{HashStrHost,HashStrCache};
+	///
+	/// let host=HashStrHost::new();
+	/// let cache1=HashStrCache::new();
+	/// let cache2=HashStrCache::new();
+	/// let mut cache3=HashStrCache::new();
+	///
+	/// let hs=cache1.presence("str").or_present_in(&cache2).or_intern_with(&host,&mut cache3);
+	/// ```
+	#[inline]
+	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<'a,&'str HashStr>{
+		self.presence_str_with_hash(index.get_hash(),index.into())
 	}
 	#[inline]
-	pub(crate) fn get_str_with_hash(&self,hash:u64,str:&str)->Option<&'str HashStr>{
-		self.entries.find(hash,|&s|s.as_str()==str).copied()
+	pub(crate) fn presence_str_with_hash<'a>(&self,hash:u64,str:&'a str)->Presence<'a,&'str HashStr>{
+		match self.entries.find(hash,|&s|s.as_str()==str){
+			Some(entry)=>Presence::Present(entry),
+			None=>Presence::Absent(HashedStr{hash,str})
+		}
 	}
 	/// Cache the provided HashStr, utilizing the precalculated hash.
 	/// This will reuse an existing HashStr if one exists.
@@ -131,6 +153,53 @@ impl<'str,'a> IntoIterator for &'a HashStrCache<'str>{
 	#[inline]
 	fn into_iter(self)->Self::IntoIter{
 		self.entries.iter().copied()
+	}
+}
+
+// Idea:
+// string cache chaining
+// cache1.presence("str").or_present_in(cache2).or_intern_with(host,cache3)
+// the point is that the hash is passed along with the entry
+
+/// Represents the presence of a HashStr in a HashStrCache.  Call .get()
+/// to grab the present value.  Holds the computed hash of the index str
+/// to be reused when checking additional caches.
+#[derive(Debug)]
+pub enum Presence<'a,T>{
+	Present(T),
+	Absent(HashedStr<'a>),
+}
+
+impl<'a,T> Presence<'a,T>{
+	#[inline]
+	pub fn get(self)->Option<T>{
+		match self{
+			Presence::Present(entry)=>Some(entry),
+			Presence::Absent(_)=>None,
+		}
+	}
+}
+impl<'a,'str> Presence<'a,&'str HashStr>{
+	/// If the HashStr was not present, check if it is present in the specified cache.
+	/// Note that this requires the lifetime of items from the previous caches
+	/// to cover the lifetime of the specified cache to make the return types match.
+	#[inline]
+	pub fn or_present_in<'new>(self,cache:&'a HashStrCache<'new>)->Presence<'a,&'new HashStr> where 'str:'new{
+		match self{
+			Presence::Present(entry)=>Presence::Present(entry),
+			Presence::Absent(HashedStr{hash,str})=>cache.presence_str_with_hash(hash,str),
+		}
+	}
+	/// If the HashStr was not present, intern the string using the specified host storage
+	/// into the specified cache.
+	/// Note that this requires the lifetime of items from the previous caches
+	/// to cover the lifetime of the specified cache to make the return types match.
+	#[inline]
+	pub fn or_intern_with<'new>(self,host:&'new HashStrHost,cache:&mut HashStrCache<'new>)->&'new HashStr where 'str:'new{
+		match self{
+			Presence::Present(entry)=>entry,
+			Presence::Absent(HashedStr{hash,str})=>cache.intern_str_with_hash(||host.alloc_str_with_hash(hash,str),hash,str),
+		}
 	}
 }
 

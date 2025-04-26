@@ -1,7 +1,7 @@
 use parking_lot::Mutex;
 use crate::ornaments::GetHash;
 use crate::hash_str::HashStr;
-use crate::cache::{HashStrHost,HashStrCache};
+use crate::cache::{HashStrHost,HashStrCache,Presence};
 
 // Number of bins (shards) for map
 const BIN_SHIFT: usize = 6;
@@ -59,7 +59,18 @@ impl<'str> Bins<'str>{
 	#[inline]
 	pub fn get(&self,index:impl GetHash+AsRef<str>)->Option<&'str HashStr>{
 		let hash=index.get_hash();
-	    self.0[whichbin(hash)].lock().cache.get_str_with_hash(hash,index.as_ref())
+	    self.0[whichbin(hash)].lock().cache.presence_str_with_hash(hash,index.as_ref()).get()
+	}
+	/// Finds an existing HashStr if it is present.  Can be chained to
+	/// spill missing items into another cache, reusing the hash.
+	/// The lifetimes of the chained caches must be in shrinking order
+	/// so that the returned type has the lifetime of the final cache in the chain.
+	/// The global cache has 'static lifetime, so must come before other
+	/// non-static caches.
+	#[inline]
+	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<'a,&'str HashStr>{
+		let hash=index.get_hash();
+	    self.0[whichbin(hash)].lock().cache.presence_str_with_hash(hash,index.into())
 	}
 	/// Cache a HashStr into the global cache.  The lifetime must be 'static.
 	#[inline]
