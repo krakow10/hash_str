@@ -50,6 +50,10 @@ pub struct HashStrCache<'str>{
 	entries:HashTable<&'str HashStr>,
 }
 
+fn get_precomputed_hash(&hash_str:&&HashStr)->u64{
+	hash_str.precomputed_hash()
+}
+
 impl<'str> HashStrCache<'str>{
 	#[inline]
 	pub fn new()->HashStrCache<'str>{
@@ -84,7 +88,7 @@ impl<'str> HashStrCache<'str>{
 	pub fn intern(&mut self,hash_str:&'str HashStr)->&'str HashStr{
 		let hash=hash_str.precomputed_hash();
 		let str=hash_str.as_str();
-		self.entries.entry(hash,|&s|s.as_str()==str,|hash_str|hash_str.precomputed_hash()).or_insert(hash_str).get()
+		self.entries.entry(hash,|&s|s.as_str()==str,get_precomputed_hash).or_insert(hash_str).get()
 	}
 	/// Intern the provided string.  This will return an existing HashStr if one exists,
 	/// or allocate a new one on the provided HashStrHost.
@@ -98,8 +102,33 @@ impl<'str> HashStrCache<'str>{
 		self.entries.entry(
 			hash,
 			|&s|s.as_str()==str,
-			|hash_str|hash_str.precomputed_hash(),
+			get_precomputed_hash,
 		).or_insert_with(with).get()
+	}
+	#[inline]
+	pub fn iter<'a>(&'a self)->impl Iterator<Item=&'str HashStr>+'a{
+		self.into_iter()
+	}
+	#[inline]
+	pub fn len(&self)->usize{
+		self.entries.len()
+	}
+	#[inline]
+	pub fn capacity(&self)->usize{
+		self.entries.capacity()
+	}
+	#[inline]
+	pub fn reserve(&mut self,additional:usize){
+		self.entries.reserve(additional,get_precomputed_hash)
+	}
+}
+
+impl<'str,'a> IntoIterator for &'a HashStrCache<'str>{
+	type Item=&'str HashStr;
+	type IntoIter=core::iter::Copied<hashbrown::hash_table::Iter<'a,&'str HashStr>>;
+	#[inline]
+	fn into_iter(self)->Self::IntoIter{
+		self.entries.iter().copied()
 	}
 }
 
