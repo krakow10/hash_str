@@ -1,14 +1,16 @@
-use crate::hash_str::{HashStr,SIZE_HASH};
+pub use ahash_macro::hash_literal;
 
 /// Construct a &'static HashStr at compile time.  These are presumably deduplicated by the compiler.
 #[macro_export]
 macro_rules! hstr{
 	($str:literal)=>{
 		{
+			use $crate::hash_literal;
+			use $crate::{HashStr,SIZE_HASH};
 			const SIZE:usize=SIZE_HASH+$str.len();
 			const BYTES:[u8;SIZE]={
 				let mut bytes=[0;SIZE];
-				let hash=ahash_macro::hash_literal!($str);
+				let hash=hash_literal!($str);
 				let hash_bytes=hash.to_ne_bytes();
 				let mut i=0;
 				while i<SIZE_HASH{

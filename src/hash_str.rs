@@ -10,7 +10,7 @@ pub struct HashStr{
 	str:str,
 }
 
-pub(crate) const SIZE_HASH:usize=core::mem::size_of::<u64>();
+pub const SIZE_HASH:usize=core::mem::size_of::<u64>();
 
 impl HashStr{
 	#[inline]
