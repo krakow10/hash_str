@@ -9,3 +9,4 @@ mod cache;
 pub use cache::*;
 
 mod ornaments;
+pub use ornaments::*;

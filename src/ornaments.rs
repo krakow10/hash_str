@@ -3,8 +3,15 @@
 // Convenient impls which may obscure
 // the readability of the core implementations.
 
+use crate::hash_str::make_hash;
 use crate::hash_str::HashStr;
 
+impl AsRef<str> for HashStr{
+	#[inline]
+	fn as_ref(&self)->&str{
+		self.as_str()
+	}
+}
 impl core::ops::Deref for HashStr{
 	type Target=str;
 	#[inline]
@@ -16,6 +23,20 @@ impl core::ops::Deref for HashStr{
 impl core::fmt::Display for HashStr{
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_str(self.as_str())
+	}
+}
+
+pub trait GetHash{
+	fn get_hash(self)->u64;
+}
+impl GetHash for &str{
+	fn get_hash(self)->u64{
+		make_hash(self)
+	}
+}
+impl GetHash for &HashStr{
+	fn get_hash(self)->u64{
+		self.precomputed_hash()
 	}
 }
 
