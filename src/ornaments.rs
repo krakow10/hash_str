@@ -26,6 +26,26 @@ impl core::fmt::Display for HashStr{
 	}
 }
 
+// helper type for indexing a HashMap without allocation
+pub struct HashStrRef<'a>{
+	hash:u64,
+	str:&'a str,
+}
+impl HashStrRef<'_>{
+	pub fn new<'a>(str:&'a str)->HashStrRef<'a>{
+		HashStrRef{
+			hash:make_hash(str),
+			str,
+		}
+	}
+}
+
+impl<'a> std::borrow::Borrow<HashStrRef<'a>> for &'a HashStr{
+	fn borrow(&self)->&HashStrRef{
+		self.as_str()
+	}
+}
+
 pub trait GetHash{
 	fn get_hash(self)->u64;
 }
