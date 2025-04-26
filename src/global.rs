@@ -1,5 +1,5 @@
 use parking_lot::Mutex;
-use crate::hash::make_hash;
+use crate::ornaments::GetHash;
 use crate::hash_str::HashStr;
 use crate::cache::{HashStrHost,HashStrCache};
 
@@ -15,7 +15,7 @@ const TOP_SHIFT: usize =
 /// This is exposed to allow e.g. serialization of the data returned by the
 /// [`cache()`] function.
 #[repr(transparent)]
-pub struct Bins<T>([Mutex<T>; NUM_BINS]);
+pub struct Bins<'str>([Mutex<HostCache<'str>>; NUM_BINS]);
 
 struct HostCache<'str>{
 	host:HashStrHost,
@@ -23,13 +23,18 @@ struct HostCache<'str>{
 }
 
 lazy_static::lazy_static!{
-	static ref STRING_CACHE:Bins<HostCache<'static>> =
+	static ref STRING_CACHE:Bins<'static> =
 	Bins(core::array::from_fn(|_|Mutex::new(
 		HostCache{
 			host:HashStrHost::new(),
 			cache:HashStrCache::new()
 		}
 	)));
+}
+
+#[inline]
+pub fn get_cache()->&'static Bins<'static>{
+	&STRING_CACHE
 }
 
 /// Don't clear the cache, all global interned strings
@@ -49,16 +54,23 @@ pub unsafe fn _clear_cache(){
 fn whichbin(hash: u64) -> usize {
     ((hash >> TOP_SHIFT as u64) % NUM_BINS as u64) as usize
 }
-
-impl<'str> Bins<HostCache<'str>>{
+impl<'str> Bins<'str>{
+	/// Get a string from the global cache.
 	#[inline]
-	pub fn get(&self,str:&str)->Option<&'str HashStr>{
-		let hash=make_hash(str);
-	    self.0[whichbin(hash)].lock().cache.get_with_hash(hash,str)
+	pub fn get(&self,index:impl GetHash+AsRef<str>+Copy)->Option<&'str HashStr>{
+		let hash=index.get_hash();
+	    self.0[whichbin(hash)].lock().cache.get_with_hash(hash,index.as_ref())
 	}
+	/// Intern a HashStr into the global cache.  The lifetime must be 'static.
 	#[inline]
-	pub fn intern(&self,str:&str)->&'str HashStr{
-		let hash=make_hash(str);
+	pub fn intern(&self,hash_str:&'str HashStr)->&'str HashStr{
+		let hash=hash_str.get_hash();
+		self.0[whichbin(hash)].lock().cache.intern(hash_str)
+	}
+	/// Intern a string into the global cache.
+	#[inline]
+	pub fn intern_str(&self,str:&str)->&'str HashStr{
+		let hash=str.get_hash();
 		let HostCache{cache,host}=&mut*self.0[whichbin(hash)].lock();
 		cache.intern_with_hash(||{
 			// SAFETY: this pointer is created to be valid for the
@@ -68,18 +80,5 @@ impl<'str> Bins<HostCache<'str>>{
 			let ptr=host.alloc_with_hash(hash,str) as *const HashStr;
 			unsafe{&*ptr}
 		},hash,str)
-	}
-}
-
-impl HashStr{
-	/// Intern a string into the global cache.
-	#[inline]
-	pub fn intern_global(str:&str)->&'static HashStr{
-		STRING_CACHE.intern(str)
-	}
-	/// Get a string from the global cache.
-	#[inline]
-	pub fn get_global(str:&str)->Option<&'static HashStr>{
-		STRING_CACHE.get(str)
 	}
 }
