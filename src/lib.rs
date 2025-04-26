@@ -2,6 +2,7 @@ mod hash;
 pub use hash::*;
 mod hash_str;
 pub use hash_str::*;
+mod macros;
 
 #[cfg(feature="cache")]
 mod cache;

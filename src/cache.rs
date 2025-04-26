@@ -1,5 +1,5 @@
 use crate::ornaments::GetHash;
-use crate::hash_str::{HashStr,SIZE_U64};
+use crate::hash_str::{HashStr,SIZE_HASH};
 use hashbrown::HashTable;
 
 /// "Host" backing storage for cached HashStrs.
@@ -47,8 +47,8 @@ impl<'str> HashStrCache<'str>{
 			return hash_str;
 		}
 
-		let hash_str_len=SIZE_U64+str.len();
-		let layout=bumpalo::core_alloc::alloc::Layout::from_size_align(hash_str_len,SIZE_U64).unwrap();
+		let hash_str_len=SIZE_HASH+str.len();
+		let layout=bumpalo::core_alloc::alloc::Layout::from_size_align(hash_str_len,SIZE_HASH).unwrap();
 		// alloc empty bytes for new HashStr
 		let new_hash_str_bytes_ptr=host.0.alloc_layout(layout).as_ptr();
 		// SAFETY: bumpalo panics if allocation fails
@@ -57,8 +57,8 @@ impl<'str> HashStrCache<'str>{
 			new_hash_str_bytes_ptr,
 			hash_str_len
 		)};
-		new_hash_str_bytes[..SIZE_U64].copy_from_slice(&hash.to_ne_bytes());
-		new_hash_str_bytes[SIZE_U64..].copy_from_slice(str.as_bytes());
+		new_hash_str_bytes[..SIZE_HASH].copy_from_slice(&hash.to_ne_bytes());
+		new_hash_str_bytes[SIZE_HASH..].copy_from_slice(str.as_bytes());
 		// SAFETY: A valid HashStr is constructed in new_hash_str_bytes
 		let new_hash_str=unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)};
 

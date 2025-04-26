@@ -3,7 +3,7 @@
 // Convenient impls which may obscure
 // the readability of the core implementations.
 
-use crate::hash_str::make_hash;
+use crate::hash::make_hash;
 use crate::hash_str::HashStr;
 
 impl AsRef<str> for HashStr{

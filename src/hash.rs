@@ -1,8 +1,21 @@
 use crate::hash_str::HashStr;
-use std::{
-    collections::{HashMap, HashSet},
-    hash::{BuildHasherDefault, Hasher},
-};
+use std::collections::{HashMap,HashSet};
+use std::hash::{BuildHasherDefault,Hash,Hasher};
+
+pub(crate) fn make_hash(value:&str)->u64{
+	let mut hasher=ahash::AHasher::default();
+	hasher.write(value.as_bytes());
+	hasher.finish()
+}
+
+// Just feed the precomputed hash into the Hasher. Note that this will of course
+// be terrible unless the Hasher in question is expecting a precomputed hash.
+impl Hash for HashStr {
+	#[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u64(self.precomputed_hash());
+    }
+}
 
 /// A standard `HashMap` using `&HashStr` as the key type with a custom `Hasher`
 /// that just uses the precomputed hash for speed instead of calculating it.
@@ -37,8 +50,6 @@ impl Hasher for IdentityHasher {
 
 #[test]
 fn test_hashing() {
-	use std::hash::Hash;
-
 	let u1=&*HashStr::anonymous("the quick brown fox".to_owned());
 	let u2=&*HashStr::anonymous("jumped over the lazy dog".to_owned());
 

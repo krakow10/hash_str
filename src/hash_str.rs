@@ -1,3 +1,5 @@
+use crate::hash::make_hash;
+
 /// HashStr is a dynamically sized type so it is used similarly to &str.
 /// A hash is stored at the beginning followed by a str.  The length is
 /// known by the fat pointer when in the form &HashStr.
@@ -7,6 +9,8 @@ pub struct HashStr{
 	hash:u64,
 	str:str,
 }
+
+pub(crate) const SIZE_HASH:usize=core::mem::size_of::<u64>();
 
 impl HashStr{
 	#[inline]
@@ -26,7 +30,7 @@ impl HashStr{
 		// but the fat pointer must be widened to undo the hack
 		unsafe{core::slice::from_raw_parts(
 			self as *const Self as *const u8,
-			SIZE_U64+self.as_str().len()
+			SIZE_HASH+self.as_str().len()
 		)}
 	}
 	/// Create a `&HashStr` from bytes.
@@ -39,7 +43,7 @@ impl HashStr{
 		// adapted from https://github.com/jonhoo/codecrafters-bittorrent-rust/blob/9dc424d4699febed87fefe8eef94509ab5392b56/src/peer.rs#L350-L359
 		let dst_ptr=bytes as *const [u8] as *const u8;
 		// fat pointer hack: set size to the dst portion without the hash
-		let dst_len_hacked=bytes.len() - SIZE_U64;
+		let dst_len_hacked=bytes.len() - SIZE_HASH;
 		let dst_bytes_hacked=unsafe{core::slice::from_raw_parts(
 			dst_ptr,
 			dst_len_hacked
@@ -54,7 +58,7 @@ impl HashStr{
 		let hash=make_hash(&value);
 		let mut bytes=value.into_bytes();
 		// prefix bytes with hash
-		bytes.reserve_exact(SIZE_U64);
+		bytes.reserve_exact(SIZE_HASH);
 		insert_bytes(&mut bytes,&hash.to_ne_bytes());
 
 		let boxed=bytes.into_boxed_slice();
@@ -77,77 +81,4 @@ fn insert_bytes(vec:&mut Vec<u8>, bytes: &[u8]) {
         core::ptr::copy_nonoverlapping(bytes.as_ptr(), vec.as_mut_ptr(), amt);
         vec.set_len(len + amt);
     }
-}
-
-// Just feed the precomputed hash into the Hasher. Note that this will of course
-// be terrible unless the Hasher in question is expecting a precomputed hash.
-impl std::hash::Hash for HashStr {
-	#[inline]
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        state.write_u64(self.precomputed_hash());
-    }
-}
-
-pub(crate) fn make_hash(value:&str)->u64{
-	use std::hash::Hasher;
-	let mut hasher=ahash::AHasher::default();
-	hasher.write(value.as_bytes());
-	hasher.finish()
-}
-
-pub(crate) const SIZE_U64:usize=core::mem::size_of::<u64>();
-/// Construct a &'static HashStr at compile time.  These are presumably deduplicated by the compiler.
-#[macro_export]
-macro_rules! hstr{
-	($str:literal)=>{
-		{
-			const SIZE:usize=SIZE_U64+$str.len();
-			const BYTES:[u8;SIZE]={
-				let mut bytes=[0;SIZE];
-				let hash=ahash_macro::hash_literal!($str);
-				let hash_bytes=hash.to_ne_bytes();
-				let mut i=0;
-				while i<SIZE_U64{
-					bytes[i]=hash_bytes[i];
-					i+=1;
-				}
-				let str_bytes=$str.as_bytes();
-				while i<SIZE{
-					bytes[i]=str_bytes[i-SIZE_U64];
-					i+=1;
-				}
-				bytes
-			};
-			unsafe{HashStr::ref_from_bytes(&BYTES)}
-		}
-	};
-}
-
-
-#[test]
-fn ahash_macro(){
-	let hash_macro=ahash_macro::hash_literal!("hey");
-	let hash_runtime=make_hash("hey");
-	assert_eq!(hash_macro,hash_runtime);
-}
-#[test]
-fn dedup(){
-	let h1=hstr!("hey");
-	let h2=hstr!("hey");
-	assert!(core::ptr::addr_eq(h1,h2));
-}
-#[test]
-fn macro_vs_constructor(){
-	let hash=make_hash("hey");
-	let h1=&*HashStr::anonymous("hey".to_owned());
-	let h2=hstr!("hey");
-	assert_eq!(h1,h2);
-	assert_eq!(h1.as_str(),"hey");
-	assert_eq!(h2.as_str(),"hey");
-	assert_eq!(h1.as_str().len(),3);
-	assert_eq!(h2.as_str().len(),3);
-	assert_eq!(h1.as_hash_str_bytes().len(),3+SIZE_U64);
-	assert_eq!(h2.as_hash_str_bytes().len(),3+SIZE_U64);
-	assert_eq!(hash,h1.precomputed_hash(),"make_hash does not equal runtime hash");
-	assert_eq!(hash,h2.precomputed_hash(),"make_hash does not equal const hash");
 }
