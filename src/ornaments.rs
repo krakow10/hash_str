@@ -26,6 +26,49 @@ impl core::fmt::Display for HashStr{
 	}
 }
 
+/// Helper type for indexing a HashMap without allocation
+/// Unhashed str is hashed on the fly instead of using a precalculated hash.
+/// Useful for indexing a HashMap without needing to allocate a Box<HashStr>
+#[repr(transparent)]
+#[derive(Debug,PartialEq,Eq)]
+pub struct UnhashedStr(str);
+impl UnhashedStr{
+	pub const fn from_ref<'a>(str:&'a str)->&'a Self{
+		// SAFETY: UnhashedStr is #[repr(transparent)]
+		unsafe{core::mem::transmute(str)}
+	}
+	pub const fn as_str<'a>(&'a self)->&'a str{
+		// SAFETY: UnhashedStr is #[repr(transparent)]
+		unsafe{core::mem::transmute(self)}
+	}
+}
+impl std::hash::Hash for UnhashedStr{
+	#[inline]
+	fn hash<H:std::hash::Hasher>(&self,state:&mut H){
+		let hash=make_hash(self.into());
+		state.write_u64(hash);
+	}
+}
+impl<'a> From<&'a str> for &'a UnhashedStr{
+	#[inline]
+	fn from(value:&'a str)->Self{
+		UnhashedStr::from_ref(value)
+	}
+}
+impl<'a> From<&'a UnhashedStr> for &'a str{
+	#[inline]
+	fn from(value:&'a UnhashedStr)->Self{
+		value.as_str()
+	}
+}
+
+impl<'a> std::borrow::Borrow<UnhashedStr> for &HashStr{
+	#[inline]
+	fn borrow(&self)->&UnhashedStr{
+		self.as_str().into()
+	}
+}
+
 pub trait GetHash{
 	fn get_hash(self)->u64;
 }
