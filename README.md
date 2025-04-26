@@ -11,9 +11,10 @@ Features:
 - Index HashStrMap using UnhashedStr or HashStr
 - Intern strings into an explicit cache
 - Create HashStr at compile time with a macro, deduplicated
+- Intern strings into a global cache like ustr
 
 Wishlist:
-- Intern strings into a global cache like ustr
+- Create compile-time deduplicated cache of all compile-time HashStrs
 
 Non-Goals:
 - Dynamic string type like std String
