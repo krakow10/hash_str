@@ -22,6 +22,7 @@ Example:
 ```rust
 use hash_str::hstr;
 use hash_str::{HashStr,UnhashedStr};
+use hash_str::HashStrMap;
 // requires cache feature
 use hash_str::{HashStrHost,HashStrCache};
 
@@ -52,14 +53,16 @@ fn main(){
 	assert!(std::ptr::addr_eq(hstr_interned,hstr_interned2));
 	assert!(std::ptr::addr_eq(hstr_interned,hstr_interned3));
 
-	let mut map=hash_str::HashStrMap::default();
+	let mut map=HashStrMap::default();
 	map.insert(hstr_static,1);
 
 	assert_eq!(map.get(hstr_static),Some(&1));
 	assert_eq!(map.get(hstr_runtime),Some(&1));
 	assert_eq!(map.get(hstr_interned),Some(&1));
-	// trait bound `Borrow<UnhashedStr> : &HashStr` allows to UnhashedStr
-	// to index HashMap without needing to allocate a temporary HashStr
+	// The trait bound `Borrow<UnhashedStr> : &HashStr` allows UnhashedStr
+	// to index HashMap without needing to allocate a temporary HashStr.
+	// However, it does not contain a precomputed hash, so it is hashed
+	// every time it is used.
 	assert_eq!(map.get(UnhashedStr::from_ref("bruh")),Some(&1));
 
 	// free cache memory of interned strings
