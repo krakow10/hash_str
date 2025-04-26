@@ -37,12 +37,14 @@ impl UnhashedStr{
 	#[inline]
 	pub const fn from_ref<'a>(str:&'a str)->&'a Self{
 		// SAFETY: UnhashedStr is #[repr(transparent)]
-		unsafe{core::mem::transmute(str)}
+		let ptr=str as *const str as *const Self;
+		unsafe{&*ptr}
 	}
 	#[inline]
 	pub const fn as_str<'a>(&'a self)->&'a str{
 		// SAFETY: UnhashedStr is #[repr(transparent)]
-		unsafe{core::mem::transmute(self)}
+		let ptr=self as *const Self as *const str;
+		unsafe{&*ptr}
 	}
 }
 impl std::hash::Hash for UnhashedStr{
