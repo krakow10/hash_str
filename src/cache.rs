@@ -10,7 +10,7 @@ impl HashStrHost{
 	pub fn new()->Self{
 		Self(bumpalo::Bump::new())
 	}
-	/// Allocate a new HashStr, regardless there is a duplicate.
+	/// Allocate a new HashStr, regardless of duplicates.
 	#[inline]
 	pub fn alloc(&self,index:&str)->&HashStr{
 		self.alloc_with_hash(index.get_hash(),index)
