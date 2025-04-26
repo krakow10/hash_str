@@ -10,8 +10,13 @@ impl HashStrHost{
 	pub fn new()->Self{
 		Self(bumpalo::Bump::new())
 	}
+	/// Allocate a new HashStr, regardless there is a duplicate.
 	#[inline]
-	fn alloc(&self,hash:u64,str:&str)->&HashStr{
+	pub fn alloc(&self,index:&str)->&HashStr{
+		self.alloc_with_hash(index.get_hash(),index)
+	}
+	#[inline]
+	fn alloc_with_hash(&self,hash:u64,str:&str)->&HashStr{
 		let hash_str_len=SIZE_HASH+str.len();
 		let layout=bumpalo::core_alloc::alloc::Layout::from_size_align(hash_str_len,SIZE_HASH).unwrap();
 		// alloc empty bytes for new HashStr
@@ -25,9 +30,7 @@ impl HashStrHost{
 		new_hash_str_bytes[..SIZE_HASH].copy_from_slice(&hash.to_ne_bytes());
 		new_hash_str_bytes[SIZE_HASH..].copy_from_slice(str.as_bytes());
 		// SAFETY: A valid HashStr is constructed in new_hash_str_bytes
-		let new_hash_str=unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)};
-
-		new_hash_str
+		unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)}
 	}
 }
 
@@ -54,27 +57,27 @@ impl<'str> HashStrCache<'str>{
 	fn get_with_hash(&self,hash:u64,str:&str)->Option<&'str HashStr>{
 		self.entries.find(hash,|&s|s.as_str()==str).copied()
 	}
-	/// Intern the provided string, utilizing the precalculated hash if possible.
-	/// This will reuse an existing HashStr without allocating if one exists.
+	/// Intern the provided HashStr, utilizing the precalculated hash.
+	/// This will reuse an existing HashStr if one exists.
+	/// The lifetime of the provided HashStr must outlive the HashStrCache.
+	/// Allocates no new HashStrs.
 	#[inline]
-	pub fn intern(&mut self,host:&'str HashStrHost,index:impl GetHash+AsRef<str>+Copy)->&'str HashStr{
-		self.intern_with_hash(host,index.get_hash(),index.as_ref())
+	pub fn intern(&mut self,hash_str:&'str HashStr)->&'str HashStr{
+		let hash=hash_str.precomputed_hash();
+		let str=hash_str.as_str();
+		self.entries.entry(hash,|&s|s.as_str()==str,|hash_str|hash_str.precomputed_hash()).or_insert(hash_str).get()
 	}
+	/// Intern the provided string.  This will return an existing HashStr if one exists,
+	/// or allocate a new one on the provided HashStrHost.
 	#[inline]
-	fn intern_with_hash(&mut self,host:&'str HashStrHost,hash:u64,str:&str)->&'str HashStr{
-		// check exists
-		if let Some(hash_str)=self.get_with_hash(hash,str){
-			return hash_str;
-		}
-
-		// create new
-		let new_hash_str=host.alloc(hash,str);
-
-		// insert into entries
-		self.entries.insert_unique(
+	pub fn intern_with(&mut self,host:&'str HashStrHost,str:&str)->&'str HashStr{
+		let hash=str.get_hash();
+		self.entries.entry(
 			hash,
-			new_hash_str,
-			|hash_str|hash_str.precomputed_hash()
+			|&s|s.as_str()==str,
+			|hash_str|hash_str.precomputed_hash(),
+		).or_insert_with(
+			||host.alloc_with_hash(hash,str)
 		).get()
 	}
 }
@@ -85,7 +88,7 @@ fn test_cache(){
 	let mut words=HashStrCache::new();
 
 	// borrow Words mutably
-	let a:&HashStr=words.intern(&lifetime_host,"bruh");
+	let a:&HashStr=words.intern_with(&lifetime_host,"bruh");
 	// drop mutable borrow and borrow immutably
 	let b:&HashStr=words.get("bruh").unwrap();
 	// compare both references; this is impossible when
@@ -99,7 +102,7 @@ fn test_cache(){
 	assert!(core::ptr::addr_eq(a,b));
 
 	// it also works with a HashStr as the index
-	let a2:&HashStr=words.intern(&lifetime_host,a);
+	let a2:&HashStr=words.intern(a);
 	let b2:&HashStr=words.get(b).unwrap();
 	assert_eq!(a,a2);
 	assert_eq!(b,b2);
