@@ -54,7 +54,7 @@ impl HashStr{
 	}
 	/// An anonymous HashStr that is not owned by a StringCache
 	#[inline]
-	pub fn anonymous(value: String) -> Box<HashStr> {
+	pub fn anonymous(value:String)->Box<HashStr>{
 		let hash=make_hash(&value);
 		let mut bytes=value.into_bytes();
 		// prefix bytes with hash
