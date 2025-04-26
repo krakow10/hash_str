@@ -31,14 +31,14 @@ fn main(){
 	let mut cache=HashStrCache::new();
 
 	// string with hash calculated at compile time
-	let hstr_static=hstr!("bruh");
+	let hstr_static:&HashStr=hstr!("bruh");
 	// string with hash calculated at run time
 	// anonymous means it does not belong to any HashStrCache
-	let hstr_runtime=&*HashStr::anonymous("bruh".to_owned());
+	let hstr_runtime:&HashStr=&HashStr::anonymous("bruh".to_owned());
 
 	// intern string into deduplication cache
 	// does not allocate unless "bruh" is a new string
-	let hstr_interned=cache.intern_with(&lifetime_host,"bruh");
+	let hstr_interned:&HashStr=cache.intern_with(&lifetime_host,"bruh");
 
 	let mut map=hash_str::HashStrMap::default();
 	map.insert(hstr_static,1);
