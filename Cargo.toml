@@ -6,7 +6,7 @@ repository = "https://github.com/krakow10/hash_str"
 license = "MIT OR Apache-2.0"
 description = "Strings with a precomputed hash."
 authors = ["Rhys Lloyd <krakow20@gmail.com>"]
-keywords = ["hash", "str", "internment", "string", "cache"]
+keywords = ["hash", "precomputed", "internment", "string", "cache"]
 
 [dependencies]
 ahash = { version = "0.8.11", features = ["std"], default-features = false }
