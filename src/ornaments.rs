@@ -27,22 +27,34 @@ impl core::fmt::Display for HashStr{
 }
 
 // helper type for indexing a HashMap without allocation
-pub struct HashStrRef<'a>{
-	hash:u64,
-	str:&'a str,
+#[repr(transparent)]
+#[derive(Debug,PartialEq,Eq)]
+pub struct UnhashedStr(str);
+// unhashed str is hashed on the fly
+impl std::hash::Hash for UnhashedStr {
+	#[inline]
+	fn hash<H:std::hash::Hasher>(&self,state:&mut H){
+		let hash=make_hash(self.into());
+		state.write_u64(hash);
+	}
 }
-impl HashStrRef<'_>{
-	pub fn new<'a>(str:&'a str)->HashStrRef<'a>{
-		HashStrRef{
-			hash:make_hash(str),
-			str,
-		}
+impl<'a> From<&'a str> for &'a UnhashedStr{
+	#[inline]
+	fn from(value:&str)->Self{
+		unsafe{core::mem::transmute(value)}
+	}
+}
+impl<'a> From<&'a UnhashedStr> for &'a str{
+	#[inline]
+	fn from(value:&UnhashedStr)->Self{
+		unsafe{core::mem::transmute(value)}
 	}
 }
 
-impl<'a> std::borrow::Borrow<HashStrRef<'a>> for &'a HashStr{
-	fn borrow(&self)->&HashStrRef{
-		self.as_str()
+impl<'a> std::borrow::Borrow<UnhashedStr> for &HashStr{
+	#[inline]
+	fn borrow(&self)->&UnhashedStr{
+		self.as_str().into()
 	}
 }
 
