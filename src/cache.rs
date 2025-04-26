@@ -12,8 +12,8 @@ impl HashStrHost{
 	}
 	/// Allocate a new HashStr, regardless of duplicates.
 	#[inline]
-	pub fn alloc(&self,index:&str)->&HashStr{
-		self.alloc_with_hash(index.get_hash(),index)
+	pub fn alloc(&self,str:&str)->&HashStr{
+		self.alloc_with_hash(str.get_hash(),str)
 	}
 	#[inline]
 	fn alloc_with_hash(&self,hash:u64,str:&str)->&HashStr{
