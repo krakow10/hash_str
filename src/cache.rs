@@ -10,6 +10,10 @@ impl HashStrHost{
 	pub fn new()->Self{
 		Self(bumpalo::Bump::new())
 	}
+	#[inline]
+	pub fn with_capacity(capacity:usize)->Self{
+		Self(bumpalo::Bump::with_capacity(capacity))
+	}
 
 	#[doc(hidden)]
 	pub unsafe fn clear(&mut self){
@@ -51,6 +55,12 @@ impl<'str> HashStrCache<'str>{
 	pub fn new()->HashStrCache<'str>{
 		HashStrCache{
 			entries:HashTable::new(),
+		}
+	}
+	#[inline]
+	pub fn with_capacity(capacity:usize)->HashStrCache<'str>{
+		HashStrCache{
+			entries:HashTable::with_capacity(capacity),
 		}
 	}
 	#[inline]
