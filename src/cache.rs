@@ -3,7 +3,7 @@ use crate::hash_str::{HashStr,SIZE_HASH};
 use hashbrown::HashTable;
 
 /// "Host" backing storage for cached HashStrs.
-/// Pass this to HashStrCache.intern_str to create new HashStrs.
+/// Pass this to HashStrCache.intern_with to do string interning with deduplication.
 pub struct HashStrHost(bumpalo::Bump);
 impl HashStrHost{
 	#[inline]
