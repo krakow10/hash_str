@@ -10,6 +10,7 @@ impl HashStrHost{
 	pub fn new()->Self{
 		Self(bumpalo::Bump::new())
 	}
+	/// Allocate a new HashStr, regardless there is a duplicate.
 	#[inline]
 	pub fn alloc(&self,index:&str)->&HashStr{
 		self.alloc_with_hash(index.get_hash(),index)
@@ -29,9 +30,7 @@ impl HashStrHost{
 		new_hash_str_bytes[..SIZE_HASH].copy_from_slice(&hash.to_ne_bytes());
 		new_hash_str_bytes[SIZE_HASH..].copy_from_slice(str.as_bytes());
 		// SAFETY: A valid HashStr is constructed in new_hash_str_bytes
-		let new_hash_str=unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)};
-
-		new_hash_str
+		unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)}
 	}
 }
 
