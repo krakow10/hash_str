@@ -39,8 +39,8 @@ lazy_static::lazy_static!{
 pub unsafe fn _clear_cache(){
 	for bin in &STRING_CACHE.0{
 		let bin=&mut*bin.lock();
-		bin.cache=HashStrCache::new();
-		bin.host=HashStrHost::new();
+		bin.cache.clear();
+		bin.host.clear();
 	}
 }
 

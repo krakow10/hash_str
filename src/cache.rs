@@ -10,6 +10,11 @@ impl HashStrHost{
 	pub fn new()->Self{
 		Self(bumpalo::Bump::new())
 	}
+
+	#[doc(hidden)]
+	pub unsafe fn clear(&mut self){
+		self.0.reset();
+	}
 	/// Allocate a new HashStr, regardless of duplicates.
 	#[inline]
 	pub fn alloc(&self,str:&str)->&HashStr{
@@ -47,6 +52,10 @@ impl<'str> HashStrCache<'str>{
 		HashStrCache{
 			entries:HashTable::new(),
 		}
+	}
+	#[inline]
+	pub fn clear(&mut self){
+		self.entries.clear();
 	}
 	/// Fetch an existing HashStr, utilizing the precalculated hash if possible.
 	#[inline]
