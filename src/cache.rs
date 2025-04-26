@@ -88,7 +88,7 @@ impl<'str> HashStrCache<'str>{
 	pub fn intern(&mut self,hash_str:&'str HashStr)->&'str HashStr{
 		let hash=hash_str.precomputed_hash();
 		let str=hash_str.as_str();
-		self.entries.entry(hash,|&s|s.as_str()==str,get_precomputed_hash).or_insert(hash_str).get()
+		self.intern_str_with_hash(||hash_str,hash,str)
 	}
 	/// Intern the provided string.  This will return an existing HashStr if one exists,
 	/// or allocate a new one on the provided HashStrHost.
