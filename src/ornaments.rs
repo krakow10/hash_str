@@ -96,17 +96,17 @@ impl<'a> core::borrow::Borrow<UnhashedStr> for &HashStr{
 }
 
 pub trait GetHash{
-	fn get_hash(self)->u64;
+	fn get_hash(&self)->u64;
 }
-impl GetHash for &str{
+impl GetHash for str{
 	#[inline]
-	fn get_hash(self)->u64{
+	fn get_hash(&self)->u64{
 		make_hash(self)
 	}
 }
-impl GetHash for &HashStr{
+impl GetHash for HashStr{
 	#[inline]
-	fn get_hash(self)->u64{
+	fn get_hash(&self)->u64{
 		self.precomputed_hash()
 	}
 }
