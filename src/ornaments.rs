@@ -27,11 +27,23 @@ impl core::fmt::Display for HashStr{
 	}
 }
 
+// TODO: more PartialOrd impls e.g. PartialOrd<str>
+impl PartialOrd for HashStr{
+	fn partial_cmp(&self,other:&Self)->Option<core::cmp::Ordering>{
+		self.as_str().partial_cmp(other.as_str())
+	}
+}
+impl Ord for HashStr{
+	fn cmp(&self,other:&Self)->std::cmp::Ordering{
+		self.as_str().cmp(other.as_str())
+	}
+}
+
 /// Helper type for indexing a HashMap without allocation
 /// Unhashed str is hashed on the fly instead of using a precalculated hash.
 /// Useful for indexing a HashMap without needing to allocate a Box<HashStr>
 #[repr(transparent)]
-#[derive(Debug,PartialEq,Eq)]
+#[derive(Debug,PartialEq,Eq,PartialOrd,Ord)]
 pub struct UnhashedStr(str);
 impl UnhashedStr{
 	#[inline]
