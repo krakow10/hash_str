@@ -94,4 +94,8 @@ impl<'str> Bins<'str>{
 			unsafe{&*ptr}
 		},hash,str)
 	}
+	#[inline]
+	pub fn iter<'a>(&'a self)->impl Iterator<Item=&'str HashStr>+'a{
+		self.0.iter().flat_map(|sc|sc.lock().cache.iter())
+	}
 }
