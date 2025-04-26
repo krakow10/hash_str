@@ -9,6 +9,24 @@ impl HashStrHost{
 	pub fn new()->Self{
 		Self(bumpalo::Bump::new())
 	}
+	fn alloc(&self,hash:u64,str:&str)->&HashStr{
+		let hash_str_len=SIZE_HASH+str.len();
+		let layout=bumpalo::core_alloc::alloc::Layout::from_size_align(hash_str_len,SIZE_HASH).unwrap();
+		// alloc empty bytes for new HashStr
+		let new_hash_str_bytes_ptr=self.0.alloc_layout(layout).as_ptr();
+		// SAFETY: bumpalo panics if allocation fails
+		// meaning ptr is always non-null
+		let new_hash_str_bytes=unsafe{core::slice::from_raw_parts_mut(
+			new_hash_str_bytes_ptr,
+			hash_str_len
+		)};
+		new_hash_str_bytes[..SIZE_HASH].copy_from_slice(&hash.to_ne_bytes());
+		new_hash_str_bytes[SIZE_HASH..].copy_from_slice(str.as_bytes());
+		// SAFETY: A valid HashStr is constructed in new_hash_str_bytes
+		let new_hash_str=unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)};
+
+		new_hash_str
+	}
 }
 
 /// Cache of existing entries in a HashStrHost.
@@ -47,20 +65,8 @@ impl<'str> HashStrCache<'str>{
 			return hash_str;
 		}
 
-		let hash_str_len=SIZE_HASH+str.len();
-		let layout=bumpalo::core_alloc::alloc::Layout::from_size_align(hash_str_len,SIZE_HASH).unwrap();
-		// alloc empty bytes for new HashStr
-		let new_hash_str_bytes_ptr=host.0.alloc_layout(layout).as_ptr();
-		// SAFETY: bumpalo panics if allocation fails
-		// meaning ptr is always non-null
-		let new_hash_str_bytes=unsafe{core::slice::from_raw_parts_mut(
-			new_hash_str_bytes_ptr,
-			hash_str_len
-		)};
-		new_hash_str_bytes[..SIZE_HASH].copy_from_slice(&hash.to_ne_bytes());
-		new_hash_str_bytes[SIZE_HASH..].copy_from_slice(str.as_bytes());
-		// SAFETY: A valid HashStr is constructed in new_hash_str_bytes
-		let new_hash_str=unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)};
+		// create new
+		let new_hash_str=host.alloc(hash,str);
 
 		// insert into entries
 		self.entries.insert_unique(
