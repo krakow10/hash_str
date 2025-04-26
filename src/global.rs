@@ -32,6 +32,18 @@ lazy_static::lazy_static!{
 	)));
 }
 
+/// Don't clear the cache, all global interned strings
+/// will become undefined behaviour to access. Used
+/// for benchmarking only.
+#[doc(hidden)]
+pub unsafe fn _clear_cache(){
+	for bin in &STRING_CACHE.0{
+		let bin=&mut*bin.lock();
+		bin.cache=HashStrCache::new();
+		bin.host=HashStrHost::new();
+	}
+}
+
 // Use the top bits of the hash to choose a bin
 #[inline]
 fn whichbin(hash: u64) -> usize {
