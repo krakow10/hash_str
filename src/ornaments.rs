@@ -139,13 +139,17 @@ macro_rules! partial_eq_lhs_as_str_rhs_as_ref{
 	};
 }
 partial_eq_lhs_as_str!(HashStr,str);
+partial_eq_lhs_as_str!(&HashStr,str);
 partial_eq_lhs_as_str!(HashStr,String);
+partial_eq_lhs_as_str!(&HashStr,String);
 partial_eq_lhs_as_str_rhs_deref!(HashStr,&str);
 partial_eq_lhs_as_str_rhs_deref!(HashStr,&String);
 partial_eq_lhs_as_str_rhs_as_ref!(HashStr,Box<str>);
+partial_eq_lhs_as_str_rhs_as_ref!(&HashStr,Box<str>);
 partial_eq_lhs_as_str_rhs_as_ref!(HashStr,&Box<str>);
 use std::borrow::Cow;
 partial_eq_lhs_as_str_rhs_as_ref!(HashStr,Cow<'_,str>);
+partial_eq_lhs_as_str_rhs_as_ref!(&HashStr,Cow<'_,str>);
 partial_eq_lhs_as_str_rhs_as_ref!(HashStr,&Cow<'_,str>);
 
 // TODO:
