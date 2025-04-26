@@ -37,7 +37,7 @@ fn main(){
 
 	// intern string into deduplication cache
 	// does not allocate unless "bruh" is a new string
-	let hstr_interned=cache.intern(&lifetime_host,"bruh");
+	let hstr_interned=cache.intern_with(&lifetime_host,"bruh");
 
 	let mut map=hash_str::HashStrMap::default();
 	map.insert(hstr_static,1);
