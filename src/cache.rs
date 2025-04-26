@@ -6,9 +6,11 @@ use hashbrown::HashTable;
 /// Pass this to HashStrCache.intern_str to create new HashStrs.
 pub struct HashStrHost(bumpalo::Bump);
 impl HashStrHost{
+	#[inline]
 	pub fn new()->Self{
 		Self(bumpalo::Bump::new())
 	}
+	#[inline]
 	fn alloc(&self,hash:u64,str:&str)->&HashStr{
 		let hash_str_len=SIZE_HASH+str.len();
 		let layout=bumpalo::core_alloc::alloc::Layout::from_size_align(hash_str_len,SIZE_HASH).unwrap();

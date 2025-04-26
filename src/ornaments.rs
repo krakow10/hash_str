@@ -21,6 +21,7 @@ impl core::ops::Deref for HashStr{
 }
 
 impl core::fmt::Display for HashStr{
+	#[inline]
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		f.write_str(self.as_str())
 	}
@@ -33,10 +34,12 @@ impl core::fmt::Display for HashStr{
 #[derive(Debug,PartialEq,Eq)]
 pub struct UnhashedStr(str);
 impl UnhashedStr{
+	#[inline]
 	pub const fn from_ref<'a>(str:&'a str)->&'a Self{
 		// SAFETY: UnhashedStr is #[repr(transparent)]
 		unsafe{core::mem::transmute(str)}
 	}
+	#[inline]
 	pub const fn as_str<'a>(&'a self)->&'a str{
 		// SAFETY: UnhashedStr is #[repr(transparent)]
 		unsafe{core::mem::transmute(self)}
@@ -73,11 +76,13 @@ pub trait GetHash{
 	fn get_hash(self)->u64;
 }
 impl GetHash for &str{
+	#[inline]
 	fn get_hash(self)->u64{
 		make_hash(self)
 	}
 }
 impl GetHash for &HashStr{
+	#[inline]
 	fn get_hash(self)->u64{
 		self.precomputed_hash()
 	}
@@ -86,11 +91,13 @@ impl GetHash for &HashStr{
 macro_rules! partial_eq_lhs_as_str{
 	($lhs:ty,$rhs:ty)=>{
 		impl PartialEq<$rhs> for $lhs {
+			#[inline]
 			fn eq(&self, other: &$rhs) -> bool {
 				self.as_str() == other
 			}
 		}
 		impl PartialEq<$lhs> for $rhs {
+			#[inline]
 			fn eq(&self, other: &$lhs) -> bool {
 				self == other.as_str()
 			}
@@ -100,11 +107,13 @@ macro_rules! partial_eq_lhs_as_str{
 macro_rules! partial_eq_lhs_as_str_rhs_deref{
 	($lhs:ty,$rhs:ty)=>{
 		impl PartialEq<$rhs> for $lhs {
+			#[inline]
 			fn eq(&self, &other: &$rhs) -> bool {
 				self.as_str() == other
 			}
 		}
 		impl PartialEq<$lhs> for $rhs {
+			#[inline]
 			fn eq(&self, other: &$lhs) -> bool {
 				*self == other.as_str()
 			}
@@ -114,11 +123,13 @@ macro_rules! partial_eq_lhs_as_str_rhs_deref{
 macro_rules! partial_eq_lhs_as_str_rhs_as_ref{
 	($lhs:ty,$rhs:ty)=>{
 		impl PartialEq<$rhs> for $lhs {
+			#[inline]
 			fn eq(&self, other: &$rhs) -> bool {
 				self.as_str() == other.as_ref()
 			}
 		}
 		impl PartialEq<$lhs> for $rhs {
+			#[inline]
 			fn eq(&self, other: &$lhs) -> bool {
 				self.as_ref() == other.as_str()
 			}
