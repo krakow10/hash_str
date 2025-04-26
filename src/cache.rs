@@ -16,7 +16,7 @@ impl HashStrHost{
 		self.alloc_with_hash(str.get_hash(),str)
 	}
 	#[inline]
-	fn alloc_with_hash(&self,hash:u64,str:&str)->&HashStr{
+	pub(crate) fn alloc_with_hash(&self,hash:u64,str:&str)->&HashStr{
 		let hash_str_len=SIZE_HASH+str.len();
 		let layout=bumpalo::core_alloc::alloc::Layout::from_size_align(hash_str_len,SIZE_HASH).unwrap();
 		// alloc empty bytes for new HashStr
@@ -54,7 +54,7 @@ impl<'str> HashStrCache<'str>{
 		self.get_with_hash(index.get_hash(),index.as_ref())
 	}
 	#[inline]
-	fn get_with_hash(&self,hash:u64,str:&str)->Option<&'str HashStr>{
+	pub(crate) fn get_with_hash(&self,hash:u64,str:&str)->Option<&'str HashStr>{
 		self.entries.find(hash,|&s|s.as_str()==str).copied()
 	}
 	/// Intern the provided HashStr, utilizing the precalculated hash.
@@ -72,13 +72,15 @@ impl<'str> HashStrCache<'str>{
 	#[inline]
 	pub fn intern_with(&mut self,host:&'str HashStrHost,str:&str)->&'str HashStr{
 		let hash=str.get_hash();
+		self.intern_with_hash(||host.alloc_with_hash(hash,str),hash,str)
+	}
+	#[inline]
+	pub(crate) fn intern_with_hash(&mut self,with:impl FnOnce()->&'str HashStr,hash:u64,str:&str)->&'str HashStr{
 		self.entries.entry(
 			hash,
 			|&s|s.as_str()==str,
 			|hash_str|hash_str.precomputed_hash(),
-		).or_insert_with(
-			||host.alloc_with_hash(hash,str)
-		).get()
+		).or_insert_with(with).get()
 	}
 }
 
