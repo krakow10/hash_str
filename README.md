@@ -1,6 +1,9 @@
 hash_str
 ========
 
+[![Latest version](https://img.shields.io/crates/v/hash_str.svg)](https://crates.io/crates/hash_str)
+![License](https://img.shields.io/crates/l/hash_str.svg)
+
 ## Strings with Precomputed Hash
 
 A simple library for strings with a precomputed hash.
