@@ -53,9 +53,10 @@ impl HashStr{
 	pub fn anonymous(value: String) -> Box<HashStr> {
 		let hash=make_hash(&value);
 		let mut bytes=value.into_bytes();
+		// prefix bytes with hash
 		bytes.reserve_exact(SIZE_U64);
-		// SAFETY: I don't know why this function doesn't exist on std Vec
-		unsafe{insert_bytes(&mut bytes,&hash.to_ne_bytes())};
+		insert_bytes(&mut bytes,&hash.to_ne_bytes());
+
 		let boxed=bytes.into_boxed_slice();
 		// SAFETY: leak the box to avoid calling its destructor
 		let href=unsafe{Self::ref_from_bytes(Box::leak(boxed))};
@@ -65,7 +66,8 @@ impl HashStr{
 }
 
 // copied from std String
-unsafe fn insert_bytes(vec:&mut Vec<u8>, bytes: &[u8]) {
+// why doesn't this function doesn't exist on std Vec?
+fn insert_bytes(vec:&mut Vec<u8>, bytes: &[u8]) {
     let len = vec.len();
     let amt = bytes.len();
     vec.reserve_exact(amt);
