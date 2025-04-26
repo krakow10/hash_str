@@ -59,12 +59,27 @@ impl<'str> HashStrCache<'str>{
 		self.entries.find(hash,|&s|s.as_str()==str).copied()
 	}
 	/// Intern the provided HashStr, utilizing the precalculated hash.
-	/// This will reuse an existing HashStr without allocating if one exists.
+	/// This will reuse an existing HashStr if one exists.
+	/// The lifetime of the provided HashStr must outlive the HashStrCache.
+	/// Allocates no new HashStrs.
 	#[inline]
 	pub fn intern(&mut self,hash_str:&'str HashStr)->&'str HashStr{
 		let hash=hash_str.precomputed_hash();
 		let str=hash_str.as_str();
 		self.entries.entry(hash,|&s|s.as_str()==str,|hash_str|hash_str.precomputed_hash()).or_insert(hash_str).get()
+	}
+	/// Intern the provided string.  This will return an existing HashStr if one exists,
+	/// or allocate a new one on the provided HashStrHost.
+	#[inline]
+	pub fn intern_with(&mut self,host:&'str HashStrHost,str:&str)->&'str HashStr{
+		let hash=str.get_hash();
+		self.entries.entry(
+			hash,
+			|&s|s.as_str()==str,
+			|hash_str|hash_str.precomputed_hash(),
+		).or_insert_with(
+			||host.alloc_with_hash(hash,str)
+		).get()
 	}
 }
 
@@ -74,7 +89,7 @@ fn test_cache(){
 	let mut words=HashStrCache::new();
 
 	// borrow Words mutably
-	let a:&HashStr=words.intern(lifetime_host.alloc("bruh"));
+	let a:&HashStr=words.intern_with(&lifetime_host,"bruh");
 	// drop mutable borrow and borrow immutably
 	let b:&HashStr=words.get("bruh").unwrap();
 	// compare both references; this is impossible when
