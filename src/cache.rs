@@ -4,6 +4,7 @@ use hashbrown::HashTable;
 
 /// "Host" backing storage for cached HashStrs.
 /// Pass this to HashStrCache.intern_with to do string interning with deduplication.
+#[derive(Debug)]
 pub struct HashStrHost(bumpalo::Bump);
 impl HashStrHost{
 	#[inline]
@@ -46,6 +47,7 @@ impl HashStrHost{
 /// Cache of existing entries in a HashStrHost.
 /// Useful to deduplicate a finite set of unique strings,
 /// minimizing the allocation of new strings.
+#[derive(Debug)]
 pub struct HashStrCache<'str>{
 	entries:HashTable<&'str HashStr>,
 }
