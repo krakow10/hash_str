@@ -27,13 +27,22 @@ impl core::fmt::Display for HashStr{
 	}
 }
 
+impl PartialEq for HashStr{
+	#[inline]
+	fn eq(&self,other:&Self)->bool{
+		self.precomputed_hash()==other.precomputed_hash()&&self.as_str().eq(other.as_str())
+	}
+}
+impl Eq for HashStr{}
 // TODO: more PartialOrd impls e.g. PartialOrd<str>
 impl PartialOrd for HashStr{
+	#[inline]
 	fn partial_cmp(&self,other:&Self)->Option<core::cmp::Ordering>{
 		self.as_str().partial_cmp(other.as_str())
 	}
 }
 impl Ord for HashStr{
+	#[inline]
 	fn cmp(&self,other:&Self)->std::cmp::Ordering{
 		self.as_str().cmp(other.as_str())
 	}

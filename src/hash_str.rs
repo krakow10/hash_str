@@ -4,7 +4,7 @@ use crate::hash::make_hash;
 /// A hash is stored at the beginning followed by a str.  The length is
 /// known by the fat pointer when in the form &HashStr.
 #[repr(C)]
-#[derive(Debug,PartialEq,Eq)]
+#[derive(Debug)]
 pub struct HashStr{
 	hash:u64,
 	str:str,
