@@ -71,6 +71,10 @@ impl<'str> Bins<'str>{
 	#[inline]
 	pub fn intern_str(&self,str:&str)->&'str HashStr{
 		let hash=str.get_hash();
+		self.intern_str_with_hash(hash,str)
+	}
+	#[inline]
+	pub(crate) fn intern_str_with_hash(&self,hash:u64,str:&str)->&'str HashStr{
 		let HostCache{cache,host}=&mut*self.0[whichbin(hash)].lock();
 		cache.intern_str_with_hash(||{
 			// SAFETY: this pointer is created to be valid for the
