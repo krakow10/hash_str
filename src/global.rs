@@ -82,3 +82,30 @@ impl<'str> Bins<'str>{
 		},hash,str)
 	}
 }
+
+macro_rules! impl_from_borrowed{
+	($ty:ty)=>{
+		impl From<$ty> for &'static HashStr{
+			fn from(value:$ty)->Self{
+				STRING_CACHE.intern_str(value)
+			}
+		}
+	};
+}
+macro_rules! impl_from_owned{
+	($ty:ty)=>{
+		impl From<$ty> for &'static HashStr{
+			fn from(value:$ty)->Self{
+				STRING_CACHE.intern_str(&value)
+			}
+		}
+	};
+}
+impl_from_borrowed!(&str);
+impl_from_owned!(Box<str>);
+impl_from_borrowed!(&Box<str>);
+impl_from_owned!(String);
+impl_from_borrowed!(&String);
+use std::borrow::Cow;
+impl_from_owned!(Cow<'_,str>);
+impl_from_borrowed!(&Cow<'_,str>);
