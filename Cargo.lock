@@ -16,9 +16,9 @@ dependencies = [
 
 [[package]]
 name = "ahash_macro"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c8de9b506c7d4f77debd28bdb64b2c2632b1547bf9e0451171b349dcdbdc449"
+checksum = "e73c78bacfd5857793b9b6813ab94605bb1699de9915f3285472f6633748e773"
 dependencies = [
  "ahash",
  "proc-macro2",

@@ -1,9 +1,10 @@
 use crate::hash_str::HashStr;
 use std::collections::{HashMap,HashSet};
-use core::hash::{BuildHasherDefault,Hash,Hasher};
+use core::hash::{BuildHasher,BuildHasherDefault,Hash,Hasher};
 
 pub(crate) fn make_hash(value:&str)->u64{
-	let mut hasher=ahash::AHasher::default();
+	let not_random_state=ahash::RandomState::with_seeds(0,0,0,0);
+	let mut hasher=not_random_state.build_hasher();
 	hasher.write(value.as_bytes());
 	hasher.finish()
 }
