@@ -15,6 +15,8 @@ Features:
 - Intern strings into an explicit cache
 - Create HashStr at compile time with a macro, deduplicated
 - Intern strings into a global cache like ustr
+  - ustr is faster if this is your main use case
+  - Convenient for migrating to explicit caches piecemeal
 
 Wishlist:
 - Create compile-time deduplicated cache of all compile-time HashStrs
