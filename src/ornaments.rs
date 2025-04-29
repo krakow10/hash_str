@@ -88,10 +88,10 @@ impl<'a> From<&'a UnhashedStr> for &'a str{
 	}
 }
 
-impl<'a> core::borrow::Borrow<UnhashedStr> for &HashStr{
+impl core::borrow::Borrow<UnhashedStr> for &HashStr{
 	#[inline]
 	fn borrow(&self)->&UnhashedStr{
-		self.as_str().into()
+		UnhashedStr::from_ref(self.as_str())
 	}
 }
 
