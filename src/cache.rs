@@ -40,7 +40,7 @@ impl HashStrHost{
 		new_hash_str_bytes[..SIZE_HASH].copy_from_slice(&hash.to_ne_bytes());
 		new_hash_str_bytes[SIZE_HASH..].copy_from_slice(str.as_bytes());
 		// SAFETY: A valid HashStr is constructed in new_hash_str_bytes
-		unsafe{HashStr::ref_from_bytes(new_hash_str_bytes)}
+		unsafe{HashStr::ref_from_bytes_unchecked(new_hash_str_bytes)}
 	}
 }
 

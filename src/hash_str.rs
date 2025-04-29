@@ -12,6 +12,17 @@ pub struct HashStr{
 
 pub const SIZE_HASH:usize=core::mem::size_of::<u64>();
 
+#[derive(Debug)]
+pub enum RefFromBytesError{
+	TooShort,
+	UTF8(core::str::Utf8Error),
+}
+impl std::fmt::Display for RefFromBytesError{
+	fn fmt(&self,f:&mut std::fmt::Formatter<'_>)->std::fmt::Result{
+		write!(f,"{self:?}")
+	}
+}
+
 impl HashStr{
 	#[inline]
 	pub const fn precomputed_hash(&self)->u64{
@@ -34,21 +45,38 @@ impl HashStr{
 		)}
 	}
 	/// Create a `&HashStr` from bytes.
+	#[inline]
+	pub fn ref_from_bytes<'a>(bytes:&'a [u8])->Result<&'a Self,RefFromBytesError>{
+		// check len
+		let Some(str_slice)=bytes.get(SIZE_HASH..)else{
+			return Err(RefFromBytesError::TooShort);
+		};
+
+		// check str slice for valid utf8
+		match core::str::from_utf8(str_slice){
+			// SAFETY:
+			// - len is at least 8
+			// - str portion is valid utf8
+			Ok(_)=>Ok(unsafe{HashStr::ref_from_bytes_unchecked(bytes)}),
+			Err(e)=>Err(RefFromBytesError::UTF8(e))
+		}
+	}
+	/// Create a `&HashStr` from bytes.
 	///
 	/// SAFETY:
 	/// - `bytes.len()` must be at least 8
 	/// - `&bytes[8..]` must be valid UTF-8
 	#[inline]
-	pub const unsafe fn ref_from_bytes<'a>(bytes:&'a [u8])->&'a Self{
+	pub const unsafe fn ref_from_bytes_unchecked<'a>(bytes:&'a [u8])->&'a Self{
 		// adapted from https://github.com/jonhoo/codecrafters-bittorrent-rust/blob/9dc424d4699febed87fefe8eef94509ab5392b56/src/peer.rs#L350-L359
-		let str_ptr=bytes as *const [u8] as *const u8;
+		let ptr=bytes as *const [u8] as *const u8;
 		// fat pointer hack: set size to the str portion without the hash
 		let str_len_hacked=bytes.len()-SIZE_HASH;
-		let str_bytes_hacked=unsafe{core::slice::from_raw_parts(
-			str_ptr,
+		let bytes_hacked=unsafe{core::slice::from_raw_parts(
+			ptr,
 			str_len_hacked
 		)};
-		let h=str_bytes_hacked as *const [u8] as *const Self;
+		let h=bytes_hacked as *const [u8] as *const Self;
 		// SAFETY: above pointer is non-null
 		unsafe{&*h}
 	}
@@ -63,7 +91,7 @@ impl HashStr{
 
 		let boxed=bytes.into_boxed_slice();
 		// SAFETY: leak the box to avoid calling its destructor
-		let href=unsafe{Self::ref_from_bytes(Box::leak(boxed))};
+		let href=unsafe{Self::ref_from_bytes_unchecked(Box::leak(boxed))};
 		// SAFETY: we know that this is a unique reference because we just created it
 		unsafe{Box::from_raw(href as *const Self as *mut Self)}
 	}

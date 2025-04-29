@@ -24,7 +24,7 @@ macro_rules! hstr{
 				}
 				bytes
 			};
-			unsafe{HashStr::ref_from_bytes(&BYTES)}
+			unsafe{HashStr::ref_from_bytes_unchecked(&BYTES)}
 		}
 	};
 }
