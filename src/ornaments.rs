@@ -6,6 +6,8 @@
 use crate::hash::make_hash;
 use crate::hash_str::HashStr;
 
+use std::borrow::Cow;
+
 impl AsRef<str> for HashStr{
 	#[inline]
 	fn as_ref(&self)->&str{
@@ -96,17 +98,45 @@ impl core::borrow::Borrow<UnhashedStr> for &HashStr{
 }
 
 pub trait GetHash{
-	fn get_hash(self)->u64;
+	fn get_hash(&self)->u64;
 }
-impl GetHash for &str{
+macro_rules! impl_get_hash{
+	($ty:ty)=>{
+		impl GetHash for $ty{
+			#[inline]
+			fn get_hash(&self)->u64{
+				make_hash(self)
+			}
+		}
+	};
+}
+macro_rules! impl_get_hash_deref{
+	($ty:ty)=>{
+		impl GetHash for $ty{
+			#[inline]
+			fn get_hash(&self)->u64{
+				make_hash(self)
+			}
+		}
+	};
+}
+impl_get_hash!(str);
+impl_get_hash_deref!(&str);
+impl_get_hash!(Box<str>);
+impl_get_hash_deref!(&Box<str>);
+impl_get_hash!(String);
+impl_get_hash_deref!(&String);
+impl_get_hash!(Cow<'_,str>);
+impl_get_hash_deref!(&Cow<'_,str>);
+impl GetHash for HashStr{
 	#[inline]
-	fn get_hash(self)->u64{
-		make_hash(self)
+	fn get_hash(&self)->u64{
+		self.precomputed_hash()
 	}
 }
 impl GetHash for &HashStr{
 	#[inline]
-	fn get_hash(self)->u64{
+	fn get_hash(&self)->u64{
 		self.precomputed_hash()
 	}
 }
@@ -168,7 +198,6 @@ partial_eq_lhs_as_str_rhs_deref!(HashStr,&String);
 partial_eq_lhs_as_str_rhs_as_ref!(HashStr,Box<str>);
 partial_eq_lhs_as_str_rhs_as_ref!(&HashStr,Box<str>);
 partial_eq_lhs_as_str_rhs_as_ref!(HashStr,&Box<str>);
-use std::borrow::Cow;
 partial_eq_lhs_as_str_rhs_as_ref!(HashStr,Cow<'_,str>);
 partial_eq_lhs_as_str_rhs_as_ref!(&HashStr,Cow<'_,str>);
 partial_eq_lhs_as_str_rhs_as_ref!(HashStr,&Cow<'_,str>);

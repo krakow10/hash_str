@@ -57,21 +57,21 @@ fn whichbin(hash: u64) -> usize {
 impl<'str> Bins<'str>{
 	/// Get a string from the global cache.
 	#[inline]
-	pub fn get(&self,index:impl GetHash+AsRef<str>+Copy)->Option<&'str HashStr>{
+	pub fn get(&self,index:impl GetHash+AsRef<str>)->Option<&'str HashStr>{
 		let hash=index.get_hash();
 	    self.0[whichbin(hash)].lock().cache.get_str_with_hash(hash,index.as_ref())
 	}
-	/// Intern a HashStr into the global cache.  The lifetime must be 'static.
+	/// Cache a HashStr into the global cache.  The lifetime must be 'static.
 	#[inline]
-	pub fn intern(&self,hash_str:&'str HashStr)->&'str HashStr{
+	pub fn cache(&self,hash_str:&'str HashStr)->&'str HashStr{
 		let hash=hash_str.get_hash();
-		self.0[whichbin(hash)].lock().cache.intern(hash_str)
+		self.0[whichbin(hash)].lock().cache.cache(hash_str)
 	}
-	/// Intern a string into the global cache.
+	/// Intern a string into the global cache, utilizing the precalculated hash if possible.
+	/// This will return an existing HashStr if one exists, or allocate a new one otherwise.
 	#[inline]
-	pub fn intern_str(&self,str:&str)->&'str HashStr{
-		let hash=str.get_hash();
-		self.intern_str_with_hash(hash,str)
+	pub fn intern(&self,index:impl GetHash+AsRef<str>)->&'str HashStr{
+		self.intern_str_with_hash(index.get_hash(),index.as_ref())
 	}
 	#[inline]
 	pub(crate) fn intern_str_with_hash(&self,hash:u64,str:&str)->&'str HashStr{
@@ -91,7 +91,7 @@ macro_rules! impl_from_borrowed{
 	($ty:ty)=>{
 		impl From<$ty> for &'static HashStr{
 			fn from(value:$ty)->Self{
-				STRING_CACHE.intern_str(value)
+				STRING_CACHE.intern(value)
 			}
 		}
 	};
@@ -100,7 +100,7 @@ macro_rules! impl_from_owned{
 	($ty:ty)=>{
 		impl From<$ty> for &'static HashStr{
 			fn from(value:$ty)->Self{
-				STRING_CACHE.intern_str(&value)
+				STRING_CACHE.intern(&value)
 			}
 		}
 	};

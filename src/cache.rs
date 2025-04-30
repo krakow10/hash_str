@@ -75,28 +75,28 @@ impl<'str> HashStrCache<'str>{
 	}
 	/// Fetch an existing HashStr, utilizing the precalculated hash if possible.
 	#[inline]
-	pub fn get(&self,index:impl GetHash+AsRef<str>+Copy)->Option<&'str HashStr>{
+	pub fn get(&self,index:impl GetHash+AsRef<str>)->Option<&'str HashStr>{
 		self.get_str_with_hash(index.get_hash(),index.as_ref())
 	}
 	#[inline]
 	pub(crate) fn get_str_with_hash(&self,hash:u64,str:&str)->Option<&'str HashStr>{
 		self.entries.find(hash,|&s|s.as_str()==str).copied()
 	}
-	/// Intern the provided HashStr, utilizing the precalculated hash.
+	/// Cache the provided HashStr, utilizing the precalculated hash.
 	/// This will reuse an existing HashStr if one exists.
 	/// The lifetime of the provided HashStr must outlive the HashStrCache.
 	/// Allocates no new HashStrs.
 	#[inline]
-	pub fn intern(&mut self,hash_str:&'str HashStr)->&'str HashStr{
-		let hash=hash_str.precomputed_hash();
-		let str=hash_str.as_str();
+	pub fn cache(&mut self,hash_str:&'str HashStr)->&'str HashStr{
+		let (hash,str)=(hash_str.precomputed_hash(),hash_str.as_str());
 		self.intern_str_with_hash(||hash_str,hash,str)
 	}
-	/// Intern the provided string.  This will return an existing HashStr if one exists,
-	/// or allocate a new one on the provided HashStrHost.
+	/// Intern the provided string, utilizing the precalculated hash if possible.
+	/// This will return an existing HashStr if one exists, or allocate
+	/// a new one on the provided HashStrHost.
 	#[inline]
-	pub fn intern_str_with(&mut self,host:&'str HashStrHost,str:&str)->&'str HashStr{
-		let hash=str.get_hash();
+	pub fn intern_with(&mut self,host:&'str HashStrHost,index:impl GetHash+AsRef<str>)->&'str HashStr{
+		let (hash,str)=(index.get_hash(),index.as_ref());
 		self.intern_str_with_hash(||host.alloc_str_with_hash(hash,str),hash,str)
 	}
 	#[inline]
@@ -140,7 +140,7 @@ fn test_cache(){
 	let mut words=HashStrCache::new();
 
 	// borrow Words mutably
-	let a:&HashStr=words.intern_str_with(&lifetime_host,"bruh");
+	let a:&HashStr=words.intern_with(&lifetime_host,"bruh");
 	// drop mutable borrow and borrow immutably
 	let b:&HashStr=words.get("bruh").unwrap();
 	// compare both references; this is impossible when
@@ -154,7 +154,7 @@ fn test_cache(){
 	assert!(core::ptr::addr_eq(a,b));
 
 	// it also works with a HashStr as the index
-	let a2:&HashStr=words.intern(a);
+	let a2:&HashStr=words.cache(a);
 	let b2:&HashStr=words.get(b).unwrap();
 	assert_eq!(a,a2);
 	assert_eq!(b,b2);
@@ -188,14 +188,17 @@ fn readme(){
 
 	// Intern string into deduplication cache
 	// Does not allocate unless "bruh" is a new string
-	let hstr_interned:&HashStr=cache.intern_str_with(&lifetime_host,"bruh");
+	let hstr_interned:&HashStr=cache.intern_with(&lifetime_host,"bruh");
 
-	// Intern HashStr into deduplication cache
-	// Provided HashStr must outlive the cache, enforced at compile time
+	// Intern HashStr into deduplication cache, utilizing existing hash
+	// The HashStr lifetime does not matter because a new one is allocated if needed.
+	let hstr_interned1:&HashStr=cache.intern_with(&lifetime_host,hstr_static);
+
+	// Cache a HashStr stored somewhere else.
+	// Provided HashStr must outlive the cache, enforced at compile time.
 	// Does not allocate a new HashStr.
-	let hstr_interned1:&HashStr=cache.intern(hstr_static);
-	let hstr_interned2:&HashStr=cache.intern(hstr_runtime);
-	let hstr_interned3:&HashStr=cache.intern(hstr_interned);
+	let hstr_interned2:&HashStr=cache.cache(hstr_runtime);
+	let hstr_interned3:&HashStr=cache.cache(hstr_interned);
 
 	// all pointers point to the first hstr that was interned
 	assert!(core::ptr::addr_eq(hstr_interned,hstr_interned1));

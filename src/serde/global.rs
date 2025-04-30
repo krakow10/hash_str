@@ -27,6 +27,6 @@ impl Visitor<'_> for HashStrVisitorGlobalFromStr{
 		write!(formatter,"Hash Str")
 	}
 	fn visit_str<E:Error>(self,v:&str)->Result<Self::Value,E>{
-		Ok(get_cache().intern_str(v))
+		Ok(get_cache().intern(v))
 	}
 }

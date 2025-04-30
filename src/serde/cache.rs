@@ -34,6 +34,6 @@ impl<'str> Visitor<'_> for HashStrVisitorHostedFromStr<'str>{
 		write!(formatter,"Hash Str")
 	}
 	fn visit_str<E:Error>(self,v:&str)->Result<Self::Value,E>{
-		Ok(self.cache.intern_str_with(&self.host,v))
+		Ok(self.cache.intern_with(&self.host,v))
 	}
 }

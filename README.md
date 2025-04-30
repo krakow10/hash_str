@@ -44,14 +44,17 @@ let mut cache=HashStrCache::new();
 
 // Intern string into deduplication cache
 // Does not allocate unless "bruh" is a new string
-let hstr_interned:&HashStr=cache.intern_str_with(&lifetime_host,"bruh");
+let hstr_interned:&HashStr=cache.intern_with(&lifetime_host,"bruh");
 
-// Intern HashStr into deduplication cache
-// Provided HashStr must outlive the cache, enforced at compile time
+// Intern HashStr into deduplication cache, utilizing existing hash
+// The HashStr lifetime does not matter because a new one is allocated if needed.
+let hstr_interned1:&HashStr=cache.intern_with(&lifetime_host,hstr_static);
+
+// Cache a HashStr stored somewhere else.
+// Provided HashStr must outlive the cache, enforced at compile time.
 // Does not allocate a new HashStr.
-let hstr_interned1:&HashStr=cache.intern(hstr_static);
-let hstr_interned2:&HashStr=cache.intern(hstr_runtime);
-let hstr_interned3:&HashStr=cache.intern(hstr_interned);
+let hstr_interned2:&HashStr=cache.cache(hstr_runtime);
+let hstr_interned3:&HashStr=cache.cache(hstr_interned);
 
 // all pointers point to the first hstr that was interned
 assert!(core::ptr::addr_eq(hstr_interned,hstr_interned1));
