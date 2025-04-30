@@ -94,11 +94,11 @@ impl<'host> HashStrCache<'host>{
 	/// let hs=cache1.presence("str").or_present_in(&cache2).or_intern_with(&host,&mut cache3);
 	/// ```
 	#[inline]
-	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<'a,&'host HashStr>{
+	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<&'host HashStr,HashedStr<'a>>{
 		self.presence_str_with_hash(index.get_hash(),index.into())
 	}
 	#[inline]
-	pub(crate) fn presence_str_with_hash<'a>(&self,hash:u64,str:&'a str)->Presence<'a,&'host HashStr>{
+	pub(crate) fn presence_str_with_hash<'a>(&self,hash:u64,str:&'a str)->Presence<&'host HashStr,HashedStr<'a>>{
 		match self.entries.find(hash,|&s|s.as_str()==str){
 			Some(entry)=>Presence::Present(entry),
 			None=>Presence::Absent(HashedStr{hash,str})
@@ -165,26 +165,26 @@ impl<'host,'a> IntoIterator for &'a HashStrCache<'host>{
 /// to grab the present value.  Holds the computed hash of the index str
 /// to be reused when checking additional caches.
 #[derive(Debug)]
-pub enum Presence<'a,T>{
-	Present(T),
-	Absent(HashedStr<'a>),
+pub enum Presence<P,A>{
+	Present(P),
+	Absent(A),
 }
 
-impl<'a,T> Presence<'a,T>{
+impl<P,A> Presence<P,A>{
 	#[inline]
-	pub fn get(self)->Option<T>{
+	pub fn get(self)->Option<P>{
 		match self{
 			Presence::Present(entry)=>Some(entry),
 			Presence::Absent(_)=>None,
 		}
 	}
 }
-impl<'a,'host> Presence<'a,&'host HashStr>{
+impl<'a,'host> Presence<&'host HashStr,HashedStr<'a>>{
 	/// If the HashStr was not present, check if it is present in the specified cache.
 	/// Note that this requires the lifetime of items from the previous caches
 	/// to cover the lifetime of the specified cache to make the return types match.
 	#[inline]
-	pub fn or_present_in<'new>(self,cache:&'a HashStrCache<'new>)->Presence<'a,&'new HashStr> where 'host:'new{
+	pub fn or_present_in<'new>(self,cache:&'a HashStrCache<'new>)->Presence<&'new HashStr,HashedStr<'a>> where 'host:'new{
 		match self{
 			Presence::Present(entry)=>Presence::Present(entry),
 			Presence::Absent(HashedStr{hash,str})=>cache.presence_str_with_hash(hash,str),

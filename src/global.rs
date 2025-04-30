@@ -1,5 +1,5 @@
 use parking_lot::Mutex;
-use crate::ornaments::GetHash;
+use crate::ornaments::{GetHash,HashedStr};
 use crate::hash_str::HashStr;
 use crate::cache::{HashStrHost,HashStrCache,Presence};
 
@@ -68,7 +68,7 @@ impl<'host> Bins<'host>{
 	/// The global cache has 'static lifetime, so must come before other
 	/// non-static caches.
 	#[inline]
-	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<'a,&'host HashStr>{
+	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<&'host HashStr,HashedStr<'a>>{
 		let hash=index.get_hash();
 	    self.0[whichbin(hash)].lock().cache.presence_str_with_hash(hash,index.into())
 	}
