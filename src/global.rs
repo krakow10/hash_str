@@ -15,11 +15,11 @@ const TOP_SHIFT: usize =
 /// This is exposed to allow e.g. serialization of the data returned by the
 /// [`cache()`] function.
 #[repr(transparent)]
-pub struct Bins<'str>([Mutex<HostCache<'str>>; NUM_BINS]);
+pub struct Bins<'host>([Mutex<HostCache<'host>>; NUM_BINS]);
 
-struct HostCache<'str>{
+struct HostCache<'host>{
 	host:HashStrHost,
-	cache:HashStrCache<'str>,
+	cache:HashStrCache<'host>,
 }
 
 lazy_static::lazy_static!{
@@ -54,10 +54,10 @@ pub unsafe fn _clear_cache(){
 fn whichbin(hash: u64) -> usize {
     ((hash >> TOP_SHIFT as u64) % NUM_BINS as u64) as usize
 }
-impl<'str> Bins<'str>{
+impl<'host> Bins<'host>{
 	/// Get a string from the global cache.
 	#[inline]
-	pub fn get(&self,index:impl GetHash+AsRef<str>)->Option<&'str HashStr>{
+	pub fn get(&self,index:impl GetHash+AsRef<str>)->Option<&'host HashStr>{
 		let hash=index.get_hash();
 	    self.0[whichbin(hash)].lock().cache.presence_str_with_hash(hash,index.as_ref()).get()
 	}
@@ -68,24 +68,24 @@ impl<'str> Bins<'str>{
 	/// The global cache has 'static lifetime, so must come before other
 	/// non-static caches.
 	#[inline]
-	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<'a,&'str HashStr>{
+	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<'a,&'host HashStr>{
 		let hash=index.get_hash();
 	    self.0[whichbin(hash)].lock().cache.presence_str_with_hash(hash,index.into())
 	}
 	/// Cache a HashStr into the global cache.  The lifetime must be 'static.
 	#[inline]
-	pub fn cache(&self,hash_str:&'str HashStr)->&'str HashStr{
+	pub fn cache(&self,hash_str:&'host HashStr)->&'host HashStr{
 		let hash=hash_str.get_hash();
 		self.0[whichbin(hash)].lock().cache.cache(hash_str)
 	}
 	/// Intern a string into the global cache, utilizing the precalculated hash if possible.
 	/// This will return an existing HashStr if one exists, or allocate a new one otherwise.
 	#[inline]
-	pub fn intern(&self,index:impl GetHash+AsRef<str>)->&'str HashStr{
+	pub fn intern(&self,index:impl GetHash+AsRef<str>)->&'host HashStr{
 		self.intern_str_with_hash(index.get_hash(),index.as_ref())
 	}
 	#[inline]
-	pub(crate) fn intern_str_with_hash(&self,hash:u64,str:&str)->&'str HashStr{
+	pub(crate) fn intern_str_with_hash(&self,hash:u64,str:&str)->&'host HashStr{
 		let HostCache{cache,host}=&mut*self.0[whichbin(hash)].lock();
 		cache.intern_str_with_hash(||{
 			// SAFETY: this pointer is created to be valid for the

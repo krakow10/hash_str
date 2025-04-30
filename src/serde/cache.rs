@@ -5,13 +5,13 @@ use crate::hash_str::HashStr;
 use super::HashStrVisitorZeroCopy;
 
 /// Read hash value and str and intern into specified cache.
-pub struct HashStrVisitorHostedFromHashStr<'str>{
-	host:&'str HashStrHost,
-	cache:&'str mut HashStrCache<'str>,
+pub struct HashStrVisitorHostedFromHashStr<'host>{
+	host:&'host HashStrHost,
+	cache:&'host mut HashStrCache<'host>,
 }
 
-impl<'str> Visitor<'_> for HashStrVisitorHostedFromHashStr<'str>{
-	type Value=&'str HashStr;
+impl<'host> Visitor<'_> for HashStrVisitorHostedFromHashStr<'host>{
+	type Value=&'host HashStr;
 	fn expecting(&self,formatter:&mut std::fmt::Formatter)->std::fmt::Result{
 		write!(formatter,"Hash Str")
 	}
@@ -23,13 +23,13 @@ impl<'str> Visitor<'_> for HashStrVisitorHostedFromHashStr<'str>{
 }
 
 /// Read str and intern into specified cache, calculates hash on the fly.
-pub struct HashStrVisitorHostedFromStr<'str>{
-	host:&'str HashStrHost,
-	cache:&'str mut HashStrCache<'str>,
+pub struct HashStrVisitorHostedFromStr<'host>{
+	host:&'host HashStrHost,
+	cache:&'host mut HashStrCache<'host>,
 }
 
-impl<'str> Visitor<'_> for HashStrVisitorHostedFromStr<'str>{
-	type Value=&'str HashStr;
+impl<'host> Visitor<'_> for HashStrVisitorHostedFromStr<'host>{
+	type Value=&'host HashStr;
 	fn expecting(&self,formatter:&mut std::fmt::Formatter)->std::fmt::Result{
 		write!(formatter,"Hash Str")
 	}

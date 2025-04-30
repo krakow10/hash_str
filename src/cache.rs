@@ -48,23 +48,23 @@ impl HashStrHost{
 /// Useful to deduplicate a finite set of unique strings,
 /// minimizing the allocation of new strings.
 #[derive(Debug)]
-pub struct HashStrCache<'str>{
-	entries:HashTable<&'str HashStr>,
+pub struct HashStrCache<'host>{
+	entries:HashTable<&'host HashStr>,
 }
 
 fn get_precomputed_hash(&hash_str:&&HashStr)->u64{
 	hash_str.precomputed_hash()
 }
 
-impl<'str> HashStrCache<'str>{
+impl<'host> HashStrCache<'host>{
 	#[inline]
-	pub fn new()->HashStrCache<'str>{
+	pub fn new()->HashStrCache<'host>{
 		HashStrCache{
 			entries:HashTable::new(),
 		}
 	}
 	#[inline]
-	pub fn with_capacity(capacity:usize)->HashStrCache<'str>{
+	pub fn with_capacity(capacity:usize)->HashStrCache<'host>{
 		HashStrCache{
 			entries:HashTable::with_capacity(capacity),
 		}
@@ -75,7 +75,7 @@ impl<'str> HashStrCache<'str>{
 	}
 	/// Fetch an existing HashStr, utilizing the precalculated hash if possible.
 	#[inline]
-	pub fn get<'a>(&self,index:impl GetHash+Into<&'a str>)->Option<&'str HashStr>{
+	pub fn get<'a>(&self,index:impl GetHash+Into<&'a str>)->Option<&'host HashStr>{
 		self.presence(index).get()
 	}
 	/// Finds an existing HashStr if it is present.  Can be chained to
@@ -94,11 +94,11 @@ impl<'str> HashStrCache<'str>{
 	/// let hs=cache1.presence("str").or_present_in(&cache2).or_intern_with(&host,&mut cache3);
 	/// ```
 	#[inline]
-	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<'a,&'str HashStr>{
+	pub fn presence<'a>(&self,index:impl GetHash+Into<&'a str>)->Presence<'a,&'host HashStr>{
 		self.presence_str_with_hash(index.get_hash(),index.into())
 	}
 	#[inline]
-	pub(crate) fn presence_str_with_hash<'a>(&self,hash:u64,str:&'a str)->Presence<'a,&'str HashStr>{
+	pub(crate) fn presence_str_with_hash<'a>(&self,hash:u64,str:&'a str)->Presence<'a,&'host HashStr>{
 		match self.entries.find(hash,|&s|s.as_str()==str){
 			Some(entry)=>Presence::Present(entry),
 			None=>Presence::Absent(HashedStr{hash,str})
@@ -109,7 +109,7 @@ impl<'str> HashStrCache<'str>{
 	/// The lifetime of the provided HashStr must outlive the HashStrCache.
 	/// Allocates no new HashStrs.
 	#[inline]
-	pub fn cache(&mut self,hash_str:&'str HashStr)->&'str HashStr{
+	pub fn cache(&mut self,hash_str:&'host HashStr)->&'host HashStr{
 		let (hash,str)=(hash_str.precomputed_hash(),hash_str.as_str());
 		self.intern_str_with_hash(||hash_str,hash,str)
 	}
@@ -117,12 +117,12 @@ impl<'str> HashStrCache<'str>{
 	/// This will return an existing HashStr if one exists, or allocate
 	/// a new one on the provided HashStrHost.
 	#[inline]
-	pub fn intern_with(&mut self,host:&'str HashStrHost,index:impl GetHash+AsRef<str>)->&'str HashStr{
+	pub fn intern_with(&mut self,host:&'host HashStrHost,index:impl GetHash+AsRef<str>)->&'host HashStr{
 		let (hash,str)=(index.get_hash(),index.as_ref());
 		self.intern_str_with_hash(||host.alloc_str_with_hash(hash,str),hash,str)
 	}
 	#[inline]
-	pub(crate) fn intern_str_with_hash(&mut self,with:impl FnOnce()->&'str HashStr,hash:u64,str:&str)->&'str HashStr{
+	pub(crate) fn intern_str_with_hash(&mut self,with:impl FnOnce()->&'host HashStr,hash:u64,str:&str)->&'host HashStr{
 		self.entries.entry(
 			hash,
 			|&s|s.as_str()==str,
@@ -130,7 +130,7 @@ impl<'str> HashStrCache<'str>{
 		).or_insert_with(with).get()
 	}
 	#[inline]
-	pub fn iter<'a>(&'a self)->impl Iterator<Item=&'str HashStr>+'a{
+	pub fn iter<'a>(&'a self)->impl Iterator<Item=&'host HashStr>+'a{
 		self.into_iter()
 	}
 	#[inline]
@@ -147,9 +147,9 @@ impl<'str> HashStrCache<'str>{
 	}
 }
 
-impl<'str,'a> IntoIterator for &'a HashStrCache<'str>{
-	type Item=&'str HashStr;
-	type IntoIter=core::iter::Copied<hashbrown::hash_table::Iter<'a,&'str HashStr>>;
+impl<'host,'a> IntoIterator for &'a HashStrCache<'host>{
+	type Item=&'host HashStr;
+	type IntoIter=core::iter::Copied<hashbrown::hash_table::Iter<'a,&'host HashStr>>;
 	#[inline]
 	fn into_iter(self)->Self::IntoIter{
 		self.entries.iter().copied()
@@ -179,12 +179,12 @@ impl<'a,T> Presence<'a,T>{
 		}
 	}
 }
-impl<'a,'str> Presence<'a,&'str HashStr>{
+impl<'a,'host> Presence<'a,&'host HashStr>{
 	/// If the HashStr was not present, check if it is present in the specified cache.
 	/// Note that this requires the lifetime of items from the previous caches
 	/// to cover the lifetime of the specified cache to make the return types match.
 	#[inline]
-	pub fn or_present_in<'new>(self,cache:&'a HashStrCache<'new>)->Presence<'a,&'new HashStr> where 'str:'new{
+	pub fn or_present_in<'new>(self,cache:&'a HashStrCache<'new>)->Presence<'a,&'new HashStr> where 'host:'new{
 		match self{
 			Presence::Present(entry)=>Presence::Present(entry),
 			Presence::Absent(HashedStr{hash,str})=>cache.presence_str_with_hash(hash,str),
@@ -195,7 +195,7 @@ impl<'a,'str> Presence<'a,&'str HashStr>{
 	/// Note that this requires the lifetime of items from the previous caches
 	/// to cover the lifetime of the specified cache to make the return types match.
 	#[inline]
-	pub fn or_intern_with<'new>(self,host:&'new HashStrHost,cache:&mut HashStrCache<'new>)->&'new HashStr where 'str:'new{
+	pub fn or_intern_with<'new>(self,host:&'new HashStrHost,cache:&mut HashStrCache<'new>)->&'new HashStr where 'host:'new{
 		match self{
 			Presence::Present(entry)=>entry,
 			Presence::Absent(HashedStr{hash,str})=>cache.intern_str_with_hash(||host.alloc_str_with_hash(hash,str),hash,str),
@@ -218,7 +218,7 @@ fn test_cache(){
 	// e.g.
 	// fn    get<'a>(&'a     self,s:&str)->Option<&'a HashStr>{
 	// fn intern<'a>(&'a mut self,s:&str)->       &'a HashStr {
-	// instead of the lifetime of the underlying data 'str
+	// instead of the lifetime of the underlying data 'host
 	assert_eq!(a,b);
 	assert!(core::ptr::addr_eq(a,b));
 
