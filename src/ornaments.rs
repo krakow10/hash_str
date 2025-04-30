@@ -103,7 +103,8 @@ impl core::borrow::Borrow<UnhashedStr> for &HashStr{
 	}
 }
 
-/// A type that can be used in HashStrCache like HashStr but does not require allocation.
+/// A type that can be passed into HashStrCache like HashStr but
+/// does not require allocation to construct.
 /// Useful for reusing the hash without needing to create a HashStr. Used internally
 /// as part of the `Presence` struct to pass the hash and str along a cache chain.
 ///

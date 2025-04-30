@@ -161,7 +161,7 @@ impl<'host,'a> IntoIterator for &'a HashStrCache<'host>{
 // cache1.presence("str").or_present_in(cache2).or_intern_with(host,cache3)
 // the point is that the hash is passed along with the entry
 
-/// Represents the presence of a HashStr in a HashStrCache.  Call .get()
+/// Represents the presence of a HashStr in a HashStrCache.  Call `.get()`
 /// to grab the present value.  Holds the computed hash of the index str
 /// to be reused when checking additional caches.
 #[derive(Debug)]
