@@ -103,6 +103,46 @@ impl core::borrow::Borrow<UnhashedStr> for &HashStr{
 	}
 }
 
+/// A type that can be used in HashStrCache like HashStr but does not require allocation.
+/// Useful for reusing the hash without needing to create a HashStr. Used internally
+/// as part of the `Presence` struct to pass the hash and str along a cache chain.
+///
+/// Note:
+/// This would be convenient for indexing a HashStrMap but unfortunately the
+/// type signature of `hash_map.get()` precludes this as a possiblity.
+/// Use UnhashedStr instead for quick and dirty one-time indexing.
+#[derive(Debug,Clone,Copy)]
+pub struct HashedStr<'a>{
+	pub(crate) hash:u64,
+	pub(crate) str:&'a str,
+}
+impl<'a> HashedStr<'a>{
+	#[inline]
+	pub fn new(str:&'a str)->Self{
+		let hash=make_hash(str);
+		HashedStr{
+			hash,
+			str,
+		}
+	}
+	#[inline]
+	pub fn precomputed_hash(&self)->u64{
+		self.hash
+	}
+}
+impl<'a> From<HashedStr<'a>> for &'a str{
+	#[inline]
+	fn from(value:HashedStr<'a>)->Self{
+		value.str
+	}
+}
+impl AsRef<str> for HashedStr<'_>{
+	#[inline]
+	fn as_ref(&self)->&str{
+		self.str
+	}
+}
+
 pub trait GetHash{
 	fn get_hash(&self)->u64;
 }
@@ -141,6 +181,12 @@ impl GetHash for HashStr{
 	}
 }
 impl GetHash for &HashStr{
+	#[inline]
+	fn get_hash(&self)->u64{
+		self.precomputed_hash()
+	}
+}
+impl GetHash for HashedStr<'_>{
 	#[inline]
 	fn get_hash(&self)->u64{
 		self.precomputed_hash()
