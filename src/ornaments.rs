@@ -8,6 +8,12 @@ use crate::hash_str::HashStr;
 
 use std::borrow::Cow;
 
+impl<'a> From<&'a HashStr> for &'a str{
+	#[inline]
+	fn from(value:&'a HashStr)->Self{
+		value.as_str()
+	}
+}
 impl AsRef<str> for HashStr{
 	#[inline]
 	fn as_ref(&self)->&str{
