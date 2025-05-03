@@ -67,7 +67,7 @@ map.insert(hstr_static,1);
 assert_eq!(map.get(hstr_static),Some(&1));
 assert_eq!(map.get(hstr_runtime),Some(&1));
 assert_eq!(map.get(hstr_interned),Some(&1));
-// The trait bound `Borrow<UnhashedStr> : &HashStr` allows UnhashedStr
+// The trait bound `&HashStr : Borrow<UnhashedStr>` allows UnhashedStr
 // to index HashMap without needing to allocate a temporary HashStr.
 // However, it does not contain a precomputed hash, so it is hashed
 // every time it is used.
