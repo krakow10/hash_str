@@ -97,8 +97,8 @@ impl HashStr{
 	}
 }
 
-// copied from std String
-// why doesn't this function doesn't exist on std Vec?
+// Copied from std String
+// Why doesn't this function exist on std Vec?
 fn insert_bytes(vec:&mut Vec<u8>, bytes: &[u8]) {
     let len = vec.len();
     let amt = bytes.len();
