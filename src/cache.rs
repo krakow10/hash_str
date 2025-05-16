@@ -80,8 +80,8 @@ impl<'host> HashStrCache<'host>{
 	}
 	/// Finds an existing HashStr if it is present.  Can be chained to
 	/// spill missing items into another cache, reusing the hash.
-	/// The lifetimes of the chained caches must be in shrinking order
-	/// so that the returned type has the lifetime of the shortest cache.
+	/// The lifetimes of the chained caches must be ordered with equivalent or narrowing
+	/// scope because the returned type has the lifetime of the last cache in the chain.
 	///
 	/// ```rust
 	/// use hash_str::{HashStrHost,HashStrCache};
